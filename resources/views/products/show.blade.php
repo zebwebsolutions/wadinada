@@ -17,11 +17,11 @@
             </div>
             <dl class="mt-5 space-y-3 text-sm">
                 <div class="flex justify-between gap-4"><dt class="text-zinc-500">Brand</dt><dd class="font-medium">{{ $product->brand ?: '-' }}</dd></div>
-                <div class="flex justify-between gap-4"><dt class="text-zinc-500">Model</dt><dd class="font-medium">{{ $product->model ?: '-' }}</dd></div>
                 <div class="flex justify-between gap-4"><dt class="text-zinc-500">SKU</dt><dd class="font-medium">{{ $product->sku ?: '-' }}</dd></div>
+                <div class="flex justify-between gap-4"><dt class="text-zinc-500">IMEI 1</dt><dd class="font-medium">{{ $product->imei1 ?: '-' }}</dd></div>
+                <div class="flex justify-between gap-4"><dt class="text-zinc-500">IMEI 2</dt><dd class="font-medium">{{ $product->imei2 ?: '-' }}</dd></div>
                 <div class="flex justify-between gap-4"><dt class="text-zinc-500">Condition</dt><dd class="font-medium">{{ $product->condition }}</dd></div>
                 <div class="flex justify-between gap-4"><dt class="text-zinc-500">Stock</dt><dd class="font-medium">{{ $product->stock_quantity }}</dd></div>
-                <div class="flex justify-between gap-4"><dt class="text-zinc-500">Cost</dt><dd class="font-medium">{{ number_format($product->purchase_price, 3) }} KD</dd></div>
                 <div class="flex justify-between gap-4"><dt class="text-zinc-500">Sale</dt><dd class="font-medium">{{ $product->sale_price ? number_format($product->sale_price, 3).' KD' : '-' }}</dd></div>
             </dl>
             @if ($product->notes)

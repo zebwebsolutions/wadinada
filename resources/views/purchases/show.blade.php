@@ -32,25 +32,17 @@
                 <div class="flex justify-between gap-4"><dt class="text-zinc-500">Name</dt><dd class="font-medium">{{ $purchase->customer->name }}</dd></div>
                 <div class="flex justify-between gap-4"><dt class="text-zinc-500">Email</dt><dd class="font-medium">{{ $purchase->customer->email ?: '-' }}</dd></div>
                 <div class="flex justify-between gap-4"><dt class="text-zinc-500">Phone</dt><dd class="font-medium">{{ $purchase->customer->phone }}</dd></div>
-                <div class="flex justify-between gap-4"><dt class="text-zinc-500">Kuwait ID</dt><dd class="font-medium">{{ $purchase->customer->kuwait_id ?: '-' }}</dd></div>
             </dl>
-            <div class="mt-5 grid gap-3 sm:grid-cols-2">
-                @if ($purchase->customer->kuwait_id_front_path)
-                    <a href="{{ asset('storage/'.$purchase->customer->kuwait_id_front_path) }}" target="_blank" class="block rounded-md border border-zinc-200 p-2 text-sm font-semibold hover:bg-zinc-50">
-                        <img src="{{ asset('storage/'.$purchase->customer->kuwait_id_front_path) }}" alt="Kuwait ID front" class="mb-2 h-36 w-full rounded object-cover">
-                        Kuwait ID front
+            <div class="mt-5">
+                @if ($purchase->customer->kuwait_id_path)
+                    <a href="{{ asset('storage/'.$purchase->customer->kuwait_id_path) }}" target="_blank" class="inline-block rounded-md border border-zinc-200 p-2 text-sm font-semibold hover:bg-zinc-50">
+                        <img src="{{ asset('storage/'.$purchase->customer->kuwait_id_path) }}" alt="Kuwait ID" class="mb-2 h-36 w-56 rounded object-cover">
+                        Kuwait ID
                     </a>
-                @endif
-                @if ($purchase->customer->kuwait_id_back_path)
-                    <a href="{{ asset('storage/'.$purchase->customer->kuwait_id_back_path) }}" target="_blank" class="block rounded-md border border-zinc-200 p-2 text-sm font-semibold hover:bg-zinc-50">
-                        <img src="{{ asset('storage/'.$purchase->customer->kuwait_id_back_path) }}" alt="Kuwait ID back" class="mb-2 h-36 w-full rounded object-cover">
-                        Kuwait ID back
-                    </a>
+                @else
+                    <p class="text-sm text-zinc-500">No Kuwait ID image uploaded.</p>
                 @endif
             </div>
-            @if ($purchase->customer->address)
-                <p class="mt-5 rounded-md bg-zinc-50 p-3 text-sm text-zinc-700">{{ $purchase->customer->address }}</p>
-            @endif
         </section>
     </div>
 </x-layouts.app>

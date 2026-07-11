@@ -25,7 +25,7 @@ class SaleWorkflowTest extends TestCase
             'name' => 'Samsung Galaxy S26',
             'category' => 'Phones',
             'brand' => 'Samsung',
-            'model' => 'S26',
+            'imei1' => '861234567890123',
             'condition' => 'New',
             'stock_quantity' => 3,
             'purchase_price' => 180,
@@ -91,5 +91,47 @@ class SaleWorkflowTest extends TestCase
         ]);
 
         $this->assertSame(3, $product->fresh()->stock_quantity);
+    }
+
+    public function test_salesman_can_find_and_print_order_receipt(): void
+    {
+        $this->actingAs(User::create([
+            'name' => 'Sales Staff',
+            'email' => 'sales-orders@example.com',
+            'password' => 'password',
+            'role' => 'sales',
+        ]));
+
+        $product = Product::create([
+            'name' => 'Pixel Phone',
+            'category' => 'Phones',
+            'brand' => 'Google',
+            'sku' => 'PX-001',
+            'imei1' => '351111222233334',
+            'condition' => 'Used',
+            'stock_quantity' => 1,
+            'purchase_price' => 120,
+            'sale_price' => 180,
+        ]);
+
+        $sale = Sale::create([
+            'product_id' => $product->id,
+            'sold_at' => now(),
+            'quantity' => 1,
+            'unit_price' => 180,
+            'total_amount' => 180,
+            'customer_name' => 'Noura',
+            'customer_phone' => '+96552222222',
+        ]);
+
+        $this->get(route('orders.index', ['search' => '351111222233334']))
+            ->assertOk()
+            ->assertSee('Pixel Phone')
+            ->assertSee('Noura');
+
+        $this->get(route('orders.print', $sale))
+            ->assertOk()
+            ->assertSee('Wadi Nada Phone')
+            ->assertSee('Shop 15, Khalid Bin Waleed Street, Sharq');
     }
 }

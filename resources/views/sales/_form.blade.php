@@ -7,7 +7,7 @@
             <label class="block lg:col-span-2">
                 <span class="text-sm font-semibold">Scan barcode</span>
                 <input type="text" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" data-sale-barcode-scan placeholder="Scan barcode to select product" class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-zinc-950 focus:outline-none">
-                <span data-sale-barcode-status class="mt-1 block text-xs text-zinc-500">Scan an item barcode here. The matching product will be selected automatically.</span>
+                <span data-sale-barcode-status class="mt-1 block text-xs text-zinc-500">Scan an item barcode or type an IMEI here. The matching product will be selected automatically.</span>
             </label>
 
             <label class="block lg:col-span-2">
@@ -15,7 +15,7 @@
                 <select name="product_id" required class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-zinc-950 focus:outline-none">
                     <option value="">Select product</option>
                     @foreach ($products as $product)
-                        <option value="{{ $product->id }}" data-sku="{{ $product->sku }}" data-sale-price="{{ $product->sale_price }}" @selected(old('product_id', $sale->product_id) == $product->id)>
+                        <option value="{{ $product->id }}" data-sku="{{ $product->sku }}" data-imei1="{{ $product->imei1 }}" data-imei2="{{ $product->imei2 }}" data-sale-price="{{ $product->sale_price }}" @selected(old('product_id', $sale->product_id) == $product->id)>
                             {{ $product->name }} {{ $product->brand ? '- '.$product->brand : '' }} ({{ $product->stock_quantity }} in stock)
                         </option>
                     @endforeach
@@ -105,11 +105,15 @@
             return;
         }
 
+        const normalizeCode = (value) => value.trim().replace(/\s+/g, '').toLowerCase();
+
         const findProductOption = (barcode) => {
-            const normalized = barcode.trim();
+            const normalized = normalizeCode(barcode);
 
             return Array.from(productSelect.options).find((option) => {
-                return option.dataset.sku && option.dataset.sku.trim() === normalized;
+                return [option.dataset.sku, option.dataset.imei1, option.dataset.imei2].some((value) => {
+                    return value && normalizeCode(value) === normalized;
+                });
             });
         };
 
@@ -117,7 +121,7 @@
             const option = findProductOption(scanInput.value);
 
             if (!option) {
-                status.textContent = 'No in-stock product found for this barcode.';
+                status.textContent = 'No in-stock product found for this barcode or IMEI.';
                 status.className = 'mt-1 block text-xs text-red-700';
                 scanInput.select();
                 return;

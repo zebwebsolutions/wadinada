@@ -15,9 +15,7 @@ class Customer extends Model
         'email',
         'phone',
         'kuwait_id',
-        'kuwait_id_front_path',
-        'kuwait_id_back_path',
-        'address',
+        'kuwait_id_path',
     ];
 
     public function purchases(): HasMany

@@ -26,7 +26,8 @@ class PurchaseWorkflowTest extends TestCase
             'product_name' => 'iPhone 15 Pro',
             'product_category' => 'Phones',
             'product_brand' => 'Apple',
-            'product_model' => 'A3101',
+            'product_imei1' => '353456789012345',
+            'product_imei2' => '353456789012346',
             'product_condition' => 'Used',
             'sale_price' => 250,
             'purchased_at' => now()->format('Y-m-d'),
@@ -37,15 +38,12 @@ class PurchaseWorkflowTest extends TestCase
             'customer_name' => 'Ahmad Saleh',
             'customer_email' => 'ahmad@example.com',
             'customer_phone' => '+96550000000',
-            'customer_kuwait_id' => '299010101234',
-            'customer_address' => 'Salmiya',
         ])->assertRedirect(route('purchases.index'));
 
         $this->assertDatabaseHas('customers', [
             'name' => 'Ahmad Saleh',
             'email' => 'ahmad@example.com',
             'phone' => '+96550000000',
-            'kuwait_id' => '299010101234',
         ]);
 
         $this->assertDatabaseHas('purchases', [
@@ -57,6 +55,8 @@ class PurchaseWorkflowTest extends TestCase
         $this->assertDatabaseHas('products', [
             'name' => 'iPhone 15 Pro',
             'brand' => 'Apple',
+            'imei1' => '353456789012345',
+            'imei2' => '353456789012346',
             'stock_quantity' => 2,
             'purchase_price' => 150,
             'sale_price' => 250,

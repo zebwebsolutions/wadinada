@@ -1,5 +1,5 @@
 <x-layouts.app heading="Dashboard" eyebrow="Sales and purchase management">
-    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <div class="rounded-md border border-zinc-200 bg-white p-5">
             <p class="text-sm font-medium text-zinc-500">Products</p>
             <p class="mt-2 text-3xl font-semibold">{{ $totalProducts }}</p>
@@ -16,10 +16,6 @@
             <p class="text-sm font-medium text-zinc-500">Sales</p>
             <p class="mt-2 text-3xl font-semibold">{{ $totalSales }}</p>
         </div>
-        <div class="rounded-md border border-zinc-200 bg-white p-5">
-            <p class="text-sm font-medium text-zinc-500">Inventory Cost</p>
-            <p class="mt-2 text-3xl font-semibold">{{ number_format($inventoryValue, 3) }} KD</p>
-        </div>
     </div>
 
     <div class="mt-6 grid gap-6 xl:grid-cols-3">
@@ -35,7 +31,6 @@
                             <th class="px-5 py-3">Product</th>
                             <th class="px-5 py-3">Category</th>
                             <th class="px-5 py-3">Stock</th>
-                            <th class="px-5 py-3">Cost</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-zinc-100">
@@ -44,10 +39,9 @@
                                 <td class="px-5 py-3 font-medium"><a href="{{ route('products.show', $product) }}">{{ $product->name }}</a></td>
                                 <td class="px-5 py-3 text-zinc-600">{{ $product->category }}</td>
                                 <td class="px-5 py-3">{{ $product->stock_quantity }}</td>
-                                <td class="px-5 py-3">{{ number_format($product->purchase_price, 3) }} KD</td>
                             </tr>
                         @empty
-                            <tr><td colspan="4" class="px-5 py-8 text-center text-zinc-500">No products yet.</td></tr>
+                            <tr><td colspan="3" class="px-5 py-8 text-center text-zinc-500">No products yet.</td></tr>
                         @endforelse
                     </tbody>
                 </table>

@@ -105,8 +105,9 @@ class PurchaseController extends Controller
             'product_name' => ['required', 'string', 'max:255'],
             'product_category' => ['required', 'string', 'max:80'],
             'product_brand' => ['nullable', 'string', 'max:120'],
-            'product_model' => ['nullable', 'string', 'max:120'],
             'product_sku' => ['nullable', 'string', 'max:80', 'unique:products,sku,'.($product?->id ?? 'NULL')],
+            'product_imei1' => ['nullable', 'string', 'max:80', 'unique:products,imei1,'.($product?->id ?? 'NULL')],
+            'product_imei2' => ['nullable', 'string', 'max:80', 'unique:products,imei2,'.($product?->id ?? 'NULL')],
             'product_condition' => ['required', 'string', 'max:80'],
             'sale_price' => ['nullable', 'numeric', 'min:0'],
             'purchased_at' => ['required', 'date'],
@@ -117,10 +118,7 @@ class PurchaseController extends Controller
             'customer_name' => ['required', 'string', 'max:255'],
             'customer_email' => ['nullable', 'email', 'max:255'],
             'customer_phone' => ['required', 'string', 'max:40'],
-            'customer_kuwait_id' => ['nullable', 'string', 'max:40'],
-            'customer_kuwait_id_front' => ['nullable', 'image', 'max:10240'],
-            'customer_kuwait_id_back' => ['nullable', 'image', 'max:10240'],
-            'customer_address' => ['nullable', 'string', 'max:1000'],
+            'customer_kuwait_id' => ['nullable', 'image', 'max:10240'],
         ]);
     }
 
@@ -130,8 +128,9 @@ class PurchaseController extends Controller
             'name' => $data['product_name'],
             'category' => $data['product_category'],
             'brand' => $data['product_brand'] ?? null,
-            'model' => $data['product_model'] ?? null,
             'sku' => $data['product_sku'] ?? null,
+            'imei1' => $data['product_imei1'] ?? null,
+            'imei2' => $data['product_imei2'] ?? null,
             'condition' => $data['product_condition'],
             'stock_quantity' => $product?->stock_quantity ?? 0,
             'purchase_price' => $data['unit_price'],
@@ -142,24 +141,16 @@ class PurchaseController extends Controller
 
     private function storeCustomer(array $data, Request $request, ?Customer $currentCustomer = null): Customer
     {
-        $lookup = $currentCustomer
-            ? ['id' => $currentCustomer->id]
-            : ($data['customer_kuwait_id'] ? ['kuwait_id' => $data['customer_kuwait_id']] : ['phone' => $data['customer_phone']]);
+        $lookup = $currentCustomer ? ['id' => $currentCustomer->id] : ['phone' => $data['customer_phone']];
 
         $payload = [
             'name' => $data['customer_name'],
             'email' => $data['customer_email'] ?? null,
             'phone' => $data['customer_phone'],
-            'kuwait_id' => $data['customer_kuwait_id'] ?? null,
-            'address' => $data['customer_address'] ?? null,
         ];
 
-        if ($request->hasFile('customer_kuwait_id_front')) {
-            $payload['kuwait_id_front_path'] = $request->file('customer_kuwait_id_front')->store('customer-ids', 'public');
-        }
-
-        if ($request->hasFile('customer_kuwait_id_back')) {
-            $payload['kuwait_id_back_path'] = $request->file('customer_kuwait_id_back')->store('customer-ids', 'public');
+        if ($request->hasFile('customer_kuwait_id')) {
+            $payload['kuwait_id_path'] = $request->file('customer_kuwait_id')->store('customer-ids', 'public');
         }
 
         return Customer::updateOrCreate($lookup, $payload);
@@ -181,7 +172,7 @@ class PurchaseController extends Controller
 
     private function categories(): array
     {
-        return ['Phones', 'Mobiles', 'Tablets', 'Laptops', 'Accessories', 'Smart Watches', 'Gaming', 'Other'];
+        return ['Phones', 'Tablets', 'Laptops', 'Accessories', 'Smart Watches', 'Gaming', 'Other'];
     }
 
     private function conditions(): array

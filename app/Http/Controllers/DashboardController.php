@@ -17,7 +17,6 @@ class DashboardController extends Controller
             'totalCustomers' => Customer::count(),
             'totalPurchases' => Purchase::count(),
             'totalSales' => Sale::count(),
-            'inventoryValue' => Product::query()->selectRaw('COALESCE(SUM(stock_quantity * purchase_price), 0) as value')->value('value'),
             'products' => Product::latest()->take(8)->get(),
             'purchases' => Purchase::with(['customer', 'product'])->latest()->take(8)->get(),
             'sales' => Sale::with('product')->latest()->take(8)->get(),

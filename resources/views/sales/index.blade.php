@@ -23,7 +23,7 @@
                             <td class="px-5 py-4">{{ $sale->sold_at->format('d M Y') }}</td>
                             <td class="px-5 py-4">
                                 <a href="{{ route('sales.show', $sale) }}" class="font-semibold hover:underline">{{ $sale->product->name }}</a>
-                                <div class="text-xs text-zinc-500">{{ $sale->product->brand }} {{ $sale->product->model }}</div>
+                                <div class="text-xs text-zinc-500">{{ $sale->product->brand ?: 'No brand' }}</div>
                             </td>
                             <td class="px-5 py-4">{{ $sale->customer_name ?: '-' }}</td>
                             <td class="px-5 py-4">{{ $sale->salesman_name ?: '-' }}</td>
@@ -32,6 +32,7 @@
                             <td class="px-5 py-4 text-right">
                                 <div class="flex justify-end gap-3">
                                     <a href="{{ route('sales.edit', $sale) }}" class="font-semibold text-zinc-700 hover:text-zinc-950">Edit</a>
+                                    <a href="{{ route('orders.print', $sale) }}" target="_blank" class="font-semibold text-zinc-700 hover:text-zinc-950">Print</a>
                                     <form method="POST" action="{{ route('sales.destroy', $sale) }}" onsubmit="return confirm('Delete this sale? Product stock will be restored by this sale quantity.');">
                                         @csrf
                                         @method('DELETE')

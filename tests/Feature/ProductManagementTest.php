@@ -13,6 +13,31 @@ class ProductManagementTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_staff_can_find_product_by_imei(): void
+    {
+        $this->actingAs(User::create([
+            'name' => 'Staff',
+            'email' => 'search-staff@example.com',
+            'password' => 'password',
+            'role' => 'staff',
+        ]));
+
+        Product::create([
+            'name' => 'iPhone 17',
+            'category' => 'Phones',
+            'brand' => 'Apple',
+            'imei1' => '990000111122223',
+            'condition' => 'Used',
+            'stock_quantity' => 1,
+            'purchase_price' => 200,
+            'sale_price' => 260,
+        ]);
+
+        $this->get(route('products.index', ['search' => '990000111122223']))
+            ->assertOk()
+            ->assertSee('iPhone 17');
+    }
+
     public function test_staff_can_delete_product_without_history(): void
     {
         $this->actingAs(User::create([

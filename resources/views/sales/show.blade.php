@@ -7,6 +7,7 @@
                     <h2 class="mt-1 text-xl font-semibold">{{ $sale->product->name }}</h2>
                 </div>
                 <div class="flex gap-2">
+                    <a href="{{ route('orders.print', $sale) }}" target="_blank" class="rounded-md bg-zinc-950 px-3 py-2 text-sm font-semibold text-white hover:bg-zinc-800">Print Receipt</a>
                     <a href="{{ route('sales.edit', $sale) }}" class="rounded-md border border-zinc-300 px-3 py-2 text-sm font-semibold hover:bg-zinc-50">Edit</a>
                     <form method="POST" action="{{ route('sales.destroy', $sale) }}" onsubmit="return confirm('Delete this sale? Product stock will be restored by this sale quantity.');">
                         @csrf

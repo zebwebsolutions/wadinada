@@ -2,7 +2,7 @@
     <section class="rounded-md border border-zinc-200 bg-white">
         <div class="flex flex-col gap-3 border-b border-zinc-200 p-5 sm:flex-row sm:items-center sm:justify-between">
             <form class="flex w-full gap-2 sm:max-w-md">
-                <input name="search" value="{{ request('search') }}" placeholder="Search product, brand, model, SKU" class="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm focus:border-zinc-950 focus:outline-none">
+                <input name="search" value="{{ request('search') }}" placeholder="Search product, brand, SKU, IMEI" class="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm focus:border-zinc-950 focus:outline-none">
                 <button class="rounded-md border border-zinc-300 px-3 py-2 text-sm font-semibold hover:bg-zinc-50">Search</button>
             </form>
             <a href="{{ route('products.create') }}" class="rounded-md bg-zinc-950 px-3 py-2 text-sm font-semibold text-white hover:bg-zinc-800">Add Product</a>
@@ -15,7 +15,6 @@
                         <th class="px-5 py-3">Category</th>
                         <th class="px-5 py-3">Condition</th>
                         <th class="px-5 py-3">Stock</th>
-                        <th class="px-5 py-3">Cost</th>
                         <th class="px-5 py-3">Sale</th>
                         <th class="px-5 py-3"></th>
                     </tr>
@@ -25,12 +24,18 @@
                         <tr>
                             <td class="px-5 py-4">
                                 <a href="{{ route('products.show', $product) }}" class="font-semibold hover:underline">{{ $product->name }}</a>
-                                <div class="text-xs text-zinc-500">{{ trim(($product->brand ? $product->brand.' ' : '').($product->model ?? '')) ?: 'No brand/model' }}</div>
+                                <div class="text-xs text-zinc-500">{{ $product->brand ?: 'No brand' }}</div>
+                                @if ($product->sku || $product->imei1 || $product->imei2)
+                                    <div class="text-xs text-zinc-500">
+                                        {{ $product->sku ? 'SKU '.$product->sku : '' }}
+                                        {{ $product->imei1 ? ' IMEI1 '.$product->imei1 : '' }}
+                                        {{ $product->imei2 ? ' IMEI2 '.$product->imei2 : '' }}
+                                    </div>
+                                @endif
                             </td>
                             <td class="px-5 py-4">{{ $product->category }}</td>
                             <td class="px-5 py-4">{{ $product->condition }}</td>
                             <td class="px-5 py-4">{{ $product->stock_quantity }}</td>
-                            <td class="px-5 py-4">{{ number_format($product->purchase_price, 3) }} KD</td>
                             <td class="px-5 py-4">{{ $product->sale_price ? number_format($product->sale_price, 3).' KD' : '-' }}</td>
                             <td class="px-5 py-4 text-right">
                                 <div class="flex justify-end gap-3">
@@ -44,7 +49,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="7" class="px-5 py-10 text-center text-zinc-500">No products found.</td></tr>
+                        <tr><td colspan="6" class="px-5 py-10 text-center text-zinc-500">No products found.</td></tr>
                     @endforelse
                 </tbody>
             </table>

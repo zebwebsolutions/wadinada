@@ -16,8 +16,9 @@ class ProductController extends Controller
                 $query->where(function ($query) use ($search) {
                     $query->where('name', 'like', "%{$search}%")
                         ->orWhere('brand', 'like', "%{$search}%")
-                        ->orWhere('model', 'like', "%{$search}%")
-                        ->orWhere('sku', 'like', "%{$search}%");
+                        ->orWhere('sku', 'like', "%{$search}%")
+                        ->orWhere('imei1', 'like', "%{$search}%")
+                        ->orWhere('imei2', 'like', "%{$search}%");
                 });
             })
             ->latest()
@@ -85,8 +86,9 @@ class ProductController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'category' => ['required', 'string', 'max:80'],
             'brand' => ['nullable', 'string', 'max:120'],
-            'model' => ['nullable', 'string', 'max:120'],
             'sku' => ['nullable', 'string', 'max:80', 'unique:products,sku,'.($product?->id ?? 'NULL')],
+            'imei1' => ['nullable', 'string', 'max:80', 'unique:products,imei1,'.($product?->id ?? 'NULL')],
+            'imei2' => ['nullable', 'string', 'max:80', 'unique:products,imei2,'.($product?->id ?? 'NULL')],
             'condition' => ['required', 'string', 'max:80'],
             'stock_quantity' => ['required', 'integer', 'min:0'],
             'purchase_price' => ['required', 'numeric', 'min:0'],
@@ -97,7 +99,7 @@ class ProductController extends Controller
 
     private function categories(): array
     {
-        return ['Phones', 'Mobiles', 'Tablets', 'Laptops', 'Accessories', 'Smart Watches', 'Gaming', 'Other'];
+        return ['Phones', 'Tablets', 'Laptops', 'Accessories', 'Smart Watches', 'Gaming', 'Other'];
     }
 
     private function conditions(): array

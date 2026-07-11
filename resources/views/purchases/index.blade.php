@@ -23,7 +23,7 @@
                             <td class="px-5 py-4">{{ $purchase->purchased_at->format('d M Y') }}</td>
                             <td class="px-5 py-4">
                                 <a href="{{ route('purchases.show', $purchase) }}" class="font-semibold hover:underline">{{ $purchase->customer->name }}</a>
-                                <div class="text-xs text-zinc-500">{{ $purchase->customer->phone }}{{ $purchase->customer->kuwait_id ? ' / ID '.$purchase->customer->kuwait_id : '' }}</div>
+                                <div class="text-xs text-zinc-500">{{ $purchase->customer->phone }}</div>
                             </td>
                             <td class="px-5 py-4">{{ $purchase->product->name }}</td>
                             <td class="px-5 py-4">{{ $purchase->quantity }}</td>

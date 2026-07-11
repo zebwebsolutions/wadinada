@@ -23,15 +23,22 @@
     </label>
 
     <label class="block">
-        <span class="text-sm font-semibold">Model</span>
-        <input name="model" value="{{ old('model', $product->model) }}" class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-zinc-950 focus:outline-none">
-    </label>
-
-    <label class="block">
         <span class="text-sm font-semibold">SKU / Barcode</span>
         <input name="sku" value="{{ old('sku', $product->sku) }}" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="next" data-barcode-field class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-zinc-950 focus:outline-none">
         <span class="mt-1 block text-xs text-zinc-500">Click here and scan with the hand scanner, or type the barcode manually.</span>
         @error('sku') <span class="mt-1 block text-sm text-red-700">{{ $message }}</span> @enderror
+    </label>
+
+    <label class="block">
+        <span class="text-sm font-semibold">IMEI 1</span>
+        <input name="imei1" value="{{ old('imei1', $product->imei1) }}" autocomplete="off" autocapitalize="off" spellcheck="false" class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-zinc-950 focus:outline-none">
+        @error('imei1') <span class="mt-1 block text-sm text-red-700">{{ $message }}</span> @enderror
+    </label>
+
+    <label class="block">
+        <span class="text-sm font-semibold">IMEI 2</span>
+        <input name="imei2" value="{{ old('imei2', $product->imei2) }}" autocomplete="off" autocapitalize="off" spellcheck="false" class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-zinc-950 focus:outline-none">
+        @error('imei2') <span class="mt-1 block text-sm text-red-700">{{ $message }}</span> @enderror
     </label>
 
     <label class="block">

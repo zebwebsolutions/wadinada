@@ -16,6 +16,8 @@ class Product extends Model
         'brand',
         'model',
         'sku',
+        'imei1',
+        'imei2',
         'condition',
         'stock_quantity',
         'purchase_price',

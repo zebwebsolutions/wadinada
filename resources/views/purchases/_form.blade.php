@@ -26,15 +26,22 @@
             </label>
 
             <label class="block">
-                <span class="text-sm font-semibold">Model</span>
-                <input name="product_model" value="{{ old('product_model', $product->model) }}" class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-zinc-950 focus:outline-none">
-            </label>
-
-            <label class="block">
                 <span class="text-sm font-semibold">SKU / Barcode</span>
                 <input name="product_sku" value="{{ old('product_sku', $product->sku) }}" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="next" data-barcode-field class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-zinc-950 focus:outline-none">
                 <span class="mt-1 block text-xs text-zinc-500">Click here and scan the device barcode. Scanner Enter will move to the next field instead of submitting.</span>
                 @error('product_sku') <span class="mt-1 block text-sm text-red-700">{{ $message }}</span> @enderror
+            </label>
+
+            <label class="block">
+                <span class="text-sm font-semibold">IMEI 1</span>
+                <input name="product_imei1" value="{{ old('product_imei1', $product->imei1) }}" autocomplete="off" autocapitalize="off" spellcheck="false" class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-zinc-950 focus:outline-none">
+                @error('product_imei1') <span class="mt-1 block text-sm text-red-700">{{ $message }}</span> @enderror
+            </label>
+
+            <label class="block">
+                <span class="text-sm font-semibold">IMEI 2</span>
+                <input name="product_imei2" value="{{ old('product_imei2', $product->imei2) }}" autocomplete="off" autocapitalize="off" spellcheck="false" class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-zinc-950 focus:outline-none">
+                @error('product_imei2') <span class="mt-1 block text-sm text-red-700">{{ $message }}</span> @enderror
             </label>
 
             <label class="block">
@@ -108,41 +115,17 @@
                 @error('customer_phone') <span class="mt-1 block text-sm text-red-700">{{ $message }}</span> @enderror
             </label>
 
-            <label class="block">
-                <span class="text-sm font-semibold">Kuwait ID number</span>
-                <input name="customer_kuwait_id" value="{{ old('customer_kuwait_id', $purchase->customer->kuwait_id ?? '') }}" class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-zinc-950 focus:outline-none">
-                @error('customer_kuwait_id') <span class="mt-1 block text-sm text-red-700">{{ $message }}</span> @enderror
-            </label>
-
-            <label class="block">
-                <span class="text-sm font-semibold">Kuwait ID front image</span>
-                <input type="file" name="customer_kuwait_id_front" accept="image/*" class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-950 focus:outline-none">
-                <span class="mt-1 block text-xs text-zinc-500">Image files up to 10 MB are accepted.</span>
-                @error('customer_kuwait_id_front') <span class="mt-1 block text-sm text-red-700">{{ $message }}</span> @enderror
-                @if (! empty($purchase->customer?->kuwait_id_front_path))
-                    <a href="{{ asset('storage/'.$purchase->customer->kuwait_id_front_path) }}" target="_blank" class="mt-3 inline-block rounded-md border border-zinc-200 bg-white p-2 hover:bg-zinc-50">
-                        <img src="{{ asset('storage/'.$purchase->customer->kuwait_id_front_path) }}" alt="Current Kuwait ID front" class="h-24 w-36 rounded object-cover">
-                        <span class="mt-1 block text-xs font-semibold text-zinc-700">View front image</span>
-                    </a>
-                @endif
-            </label>
-
-            <label class="block">
-                <span class="text-sm font-semibold">Kuwait ID back image</span>
-                <input type="file" name="customer_kuwait_id_back" accept="image/*" class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-950 focus:outline-none">
-                <span class="mt-1 block text-xs text-zinc-500">Image files up to 10 MB are accepted.</span>
-                @error('customer_kuwait_id_back') <span class="mt-1 block text-sm text-red-700">{{ $message }}</span> @enderror
-                @if (! empty($purchase->customer?->kuwait_id_back_path))
-                    <a href="{{ asset('storage/'.$purchase->customer->kuwait_id_back_path) }}" target="_blank" class="mt-3 inline-block rounded-md border border-zinc-200 bg-white p-2 hover:bg-zinc-50">
-                        <img src="{{ asset('storage/'.$purchase->customer->kuwait_id_back_path) }}" alt="Current Kuwait ID back" class="h-24 w-36 rounded object-cover">
-                        <span class="mt-1 block text-xs font-semibold text-zinc-700">View back image</span>
-                    </a>
-                @endif
-            </label>
-
             <label class="block lg:col-span-2">
-                <span class="text-sm font-semibold">Address</span>
-                <textarea name="customer_address" rows="3" class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-zinc-950 focus:outline-none">{{ old('customer_address', $purchase->customer->address ?? '') }}</textarea>
+                <span class="text-sm font-semibold">Kuwait ID</span>
+                <input type="file" name="customer_kuwait_id" accept="image/*" class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-950 focus:outline-none">
+                <span class="mt-1 block text-xs text-zinc-500">Image files up to 10 MB are accepted.</span>
+                @error('customer_kuwait_id') <span class="mt-1 block text-sm text-red-700">{{ $message }}</span> @enderror
+                @if (! empty($purchase->customer?->kuwait_id_path))
+                    <a href="{{ asset('storage/'.$purchase->customer->kuwait_id_path) }}" target="_blank" class="mt-3 inline-block rounded-md border border-zinc-200 bg-white p-2 hover:bg-zinc-50">
+                        <img src="{{ asset('storage/'.$purchase->customer->kuwait_id_path) }}" alt="Current Kuwait ID" class="h-24 w-36 rounded object-cover">
+                        <span class="mt-1 block text-xs font-semibold text-zinc-700">View Kuwait ID</span>
+                    </a>
+                @endif
             </label>
         </div>
     </section>
