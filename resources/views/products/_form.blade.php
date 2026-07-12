@@ -35,18 +35,6 @@
     </label>
 
     <label class="block">
-        <span class="text-sm font-semibold">IMEI 1</span>
-        <input name="imei1" value="{{ old('imei1', $product->imei1) }}" autocomplete="off" autocapitalize="off" spellcheck="false" class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-zinc-950 focus:outline-none">
-        @error('imei1') <span class="mt-1 block text-sm text-red-700">{{ $message }}</span> @enderror
-    </label>
-
-    <label class="block">
-        <span class="text-sm font-semibold">IMEI 2</span>
-        <input name="imei2" value="{{ old('imei2', $product->imei2) }}" autocomplete="off" autocapitalize="off" spellcheck="false" class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-zinc-950 focus:outline-none">
-        @error('imei2') <span class="mt-1 block text-sm text-red-700">{{ $message }}</span> @enderror
-    </label>
-
-    <label class="block">
         <span class="text-sm font-semibold">Condition</span>
         <select name="condition" required class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-zinc-950 focus:outline-none">
             @foreach ($conditions as $condition)

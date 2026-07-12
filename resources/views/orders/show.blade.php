@@ -21,7 +21,10 @@
                     <tbody class="divide-y divide-zinc-100">
                         @foreach ($order->items as $item)
                             <tr>
-                                <td class="px-3 py-2 font-semibold">{{ $item->product->name }}</td>
+                                <td class="px-3 py-2">
+                                    <div class="font-semibold">{{ $item->product->name }}</div>
+                                    <div class="text-xs text-zinc-500">{{ $item->unit?->imei ? 'IMEI '.$item->unit->imei : '' }}</div>
+                                </td>
                                 <td class="px-3 py-2">{{ $item->quantity }}</td>
                                 <td class="px-3 py-2">{{ number_format($item->unit_price, 3) }} KD</td>
                                 <td class="px-3 py-2">{{ number_format($item->total_amount, 3) }} KD</td>

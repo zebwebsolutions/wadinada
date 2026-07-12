@@ -5,9 +5,9 @@
 <div class="space-y-6">
     <section class="rounded-md border border-zinc-200 bg-white p-5">
         <div class="mb-4 flex items-center justify-between gap-3">
-            <h2 class="font-semibold">Device / Product Information</h2>
+            <h2 class="font-semibold">Product Information</h2>
             @unless ($isEditing)
-                <button type="button" data-add-device class="rounded-md border border-zinc-300 px-3 py-2 text-sm font-semibold hover:bg-zinc-50">Add Device</button>
+                <button type="button" data-add-device class="rounded-md border border-zinc-300 px-3 py-2 text-sm font-semibold hover:bg-zinc-50">Add Product</button>
             @endunless
         </div>
 
@@ -19,7 +19,7 @@
             <div data-devices class="space-y-5">
                 <div data-device class="rounded-md border border-zinc-200 p-4">
                     <div class="mb-4 flex items-center justify-between">
-                        <h3 class="font-semibold">Device 1</h3>
+                        <h3 class="font-semibold">Product 1</h3>
                         <button type="button" data-remove-device class="hidden text-sm font-semibold text-red-700">Remove</button>
                     </div>
                     <div class="grid gap-5 lg:grid-cols-2">
@@ -94,8 +94,8 @@
     <template data-device-template>
         <div data-device class="rounded-md border border-zinc-200 p-4">
             <div class="mb-4 flex items-center justify-between">
-                <h3 class="font-semibold">Device __NUMBER__</h3>
-                <button type="button" data-remove-device class="text-sm font-semibold text-red-700">Remove</button>
+                <h3 class="font-semibold">Product __NUMBER__</h3>
+                <button type="button" data-remove-device class="text-sm font-semibold text-red-700">Remove product</button>
             </div>
             <div class="grid gap-5 lg:grid-cols-2">
                 @include('purchases._device-fields', ['prefix' => 'products[__INDEX__]', 'index' => '__INDEX__', 'product' => new App\Models\Product(['condition' => 'Used'])])
@@ -113,9 +113,16 @@
             const refreshButtons = () => {
                 const devices = list.querySelectorAll('[data-device]');
                 devices.forEach((device, index) => {
-                    device.querySelector('h3').textContent = 'Device ' + (index + 1);
+                    device.querySelector('h3').textContent = 'Product ' + (index + 1);
                     const remove = device.querySelector('[data-remove-device]');
                     remove.classList.toggle('hidden', devices.length === 1);
+                });
+            };
+
+            const refreshUnitButtons = (device) => {
+                const units = device.querySelectorAll('[data-unit-row]');
+                units.forEach((unit) => {
+                    unit.querySelector('[data-remove-unit]').classList.toggle('hidden', units.length === 1);
                 });
             };
 
@@ -132,6 +139,28 @@
                 if (event.target.matches('[data-remove-device]')) {
                     event.target.closest('[data-device]').remove();
                     refreshButtons();
+                }
+
+                if (event.target.matches('[data-add-unit]')) {
+                    const device = event.target.closest('[data-device]');
+                    const units = device.querySelector('[data-units]');
+                    const first = units.querySelector('[data-unit-row]');
+                    const unitIndex = units.querySelectorAll('[data-unit-row]').length;
+                    const clone = first.cloneNode(true);
+
+                    clone.querySelectorAll('input').forEach((input) => {
+                        input.value = '';
+                        input.name = input.name.replace(/\[units]\[\d+]/, '[units][' + unitIndex + ']');
+                    });
+
+                    units.appendChild(clone);
+                    refreshUnitButtons(device);
+                }
+
+                if (event.target.matches('[data-remove-unit]')) {
+                    const device = event.target.closest('[data-device]');
+                    event.target.closest('[data-unit-row]').remove();
+                    refreshUnitButtons(device);
                 }
             });
         });

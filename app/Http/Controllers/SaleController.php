@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Models\ProductUnit;
 use App\Models\Order;
 use App\Models\Sale;
 use Illuminate\Http\RedirectResponse;
@@ -25,7 +26,11 @@ class SaleController extends Controller
     public function create(): View
     {
         return view('sales.create', [
-            'products' => Product::where('stock_quantity', '>', 0)->orderBy('name')->get(),
+            'units' => ProductUnit::with('product')
+                ->where('status', 'available')
+                ->whereHas('product', fn ($query) => $query->where('stock_quantity', '>', 0))
+                ->latest()
+                ->get(),
             'paymentMethods' => $this->paymentMethods(),
         ]);
     }
@@ -35,17 +40,18 @@ class SaleController extends Controller
         $data = $this->validatedCheckout($request);
 
         $order = DB::transaction(function () use ($data, $request) {
-            $products = Product::lockForUpdate()
-                ->whereIn('id', collect($data['items'])->pluck('product_id'))
+            $units = ProductUnit::with('product')
+                ->lockForUpdate()
+                ->whereIn('id', collect($data['items'])->pluck('product_unit_id'))
                 ->get()
                 ->keyBy('id');
 
             foreach ($data['items'] as $index => $item) {
-                $product = $products->get($item['product_id']);
+                $unit = $units->get($item['product_unit_id']);
 
-                if (! $product || $product->stock_quantity < $item['quantity']) {
+                if (! $unit || $unit->status !== 'available' || $unit->product->stock_quantity < 1) {
                     throw ValidationException::withMessages([
-                        'items.'.$index.'.quantity' => 'Only '.($product?->stock_quantity ?? 0).' item(s) are available in stock.',
+                        'items.'.$index.'.product_unit_id' => 'This unit is no longer available.',
                     ]);
                 }
             }
@@ -68,13 +74,15 @@ class SaleController extends Controller
             $total = 0;
 
             foreach ($data['items'] as $item) {
-                $product = $products->get($item['product_id']);
-                $lineTotal = $item['quantity'] * $item['unit_price'];
+                $unit = $units->get($item['product_unit_id']);
+                $product = $unit->product;
+                $lineTotal = $item['unit_price'];
                 $total += $lineTotal;
 
                 $order->items()->create([
                     'product_id' => $product->id,
-                    'quantity' => $item['quantity'],
+                    'product_unit_id' => $unit->id,
+                    'quantity' => 1,
                     'unit_price' => $item['unit_price'],
                     'total_amount' => $lineTotal,
                 ]);
@@ -83,8 +91,9 @@ class SaleController extends Controller
                     'order_id' => $order->id,
                     'order_number' => $order->order_number,
                     'product_id' => $product->id,
+                    'product_unit_id' => $unit->id,
                     'sold_at' => $data['ordered_at'],
-                    'quantity' => $item['quantity'],
+                    'quantity' => 1,
                     'unit_price' => $item['unit_price'],
                     'total_amount' => $lineTotal,
                     'payment_method' => $data['payment_method'] ?? null,
@@ -96,7 +105,8 @@ class SaleController extends Controller
                     'notes' => $data['notes'] ?? null,
                 ]);
 
-                $product->decrement('stock_quantity', $item['quantity']);
+                $unit->update(['status' => 'sold']);
+                $product->decrement('stock_quantity');
             }
 
             $order->update(['total_amount' => $total]);
@@ -150,6 +160,7 @@ class SaleController extends Controller
     {
         DB::transaction(function () use ($sale) {
             $sale->product()->increment('stock_quantity', $sale->quantity);
+            $sale->unit?->update(['status' => 'available']);
             $sale->delete();
         });
 
@@ -177,8 +188,7 @@ class SaleController extends Controller
         return $request->validate([
             'ordered_at' => ['required', 'date'],
             'items' => ['required', 'array', 'min:1'],
-            'items.*.product_id' => ['required', 'exists:products,id'],
-            'items.*.quantity' => ['required', 'integer', 'min:1'],
+            'items.*.product_unit_id' => ['required', 'exists:product_units,id'],
             'items.*.unit_price' => ['required', 'numeric', 'min:0'],
             'payment_method' => ['nullable', 'string', 'max:80'],
             'salesman_name' => ['nullable', 'string', 'max:255'],

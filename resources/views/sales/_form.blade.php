@@ -8,46 +8,38 @@
             <label class="block lg:col-span-2">
                 <span class="text-sm font-semibold">Scan serial / IMEI / barcode</span>
                 <input type="text" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" data-sale-scan class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-zinc-950 focus:outline-none">
-                <span data-sale-status class="mt-1 block text-xs text-zinc-500">Scan or type a SKU, serial, IMEI 1, or IMEI 2.</span>
+                <span data-sale-status class="mt-1 block text-xs text-zinc-500">Scan or type a product SKU/serial or unit IMEI.</span>
             </label>
 
             <label class="block lg:col-span-2">
-                <span class="text-sm font-semibold">Product</span>
+                <span class="text-sm font-semibold">Unit</span>
                 <select data-product-picker class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-zinc-950 focus:outline-none">
-                    <option value="">Select product</option>
-                    @foreach ($products as $product)
-                        <option
-                            value="{{ $product->id }}"
-                            data-name="{{ $product->name }}"
-                            data-brand="{{ $product->brand }}"
-                            data-sku="{{ $product->sku }}"
-                            data-imei1="{{ $product->imei1 }}"
-                            data-imei2="{{ $product->imei2 }}"
-                            data-stock="{{ $product->stock_quantity }}"
-                            data-sale-price="{{ $product->sale_price ?: 0 }}"
-                        >
-                            {{ $product->name }} {{ $product->brand ? '- '.$product->brand : '' }} ({{ $product->stock_quantity }} in stock)
+                    <option value="">Select unit</option>
+                    @foreach ($units as $unit)
+                        @php($product = $unit->product)
+                        <option value="{{ $unit->id }}" data-name="{{ $product->name }}" data-brand="{{ $product->brand }}" data-sku="{{ $product->sku }}" data-imei="{{ $unit->imei }}" data-sale-price="{{ $product->sale_price ?: 0 }}">
+                            {{ $product->name }} {{ $product->brand ? '- '.$product->brand : '' }} {{ $unit->imei ? '- IMEI '.$unit->imei : '- Unit #'.$unit->id }}
                         </option>
                     @endforeach
                 </select>
             </label>
 
-            <button type="button" data-add-to-cart class="mt-6 rounded-md bg-zinc-950 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800">Add Item</button>
+            <button type="button" data-add-to-cart class="mt-6 rounded-md bg-zinc-950 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800">Add Unit</button>
         </div>
 
         <div class="mt-5 overflow-x-auto rounded-md border border-zinc-200">
             <table class="min-w-full divide-y divide-zinc-200 text-sm">
                 <thead class="bg-zinc-50 text-left text-xs font-semibold uppercase text-zinc-500">
                     <tr>
-                        <th class="px-4 py-3">Product</th>
+                        <th class="px-4 py-3">Unit</th>
                         <th class="px-4 py-3">Qty</th>
-                        <th class="px-4 py-3">Price KD</th>
+                        <th class="px-4 py-3">Sale price KD</th>
                         <th class="px-4 py-3">Total</th>
                         <th class="px-4 py-3"></th>
                     </tr>
                 </thead>
                 <tbody data-cart-rows class="divide-y divide-zinc-100">
-                    <tr data-empty-cart><td colspan="5" class="px-4 py-8 text-center text-zinc-500">No items added yet.</td></tr>
+                    <tr data-empty-cart><td colspan="5" class="px-4 py-8 text-center text-zinc-500">No units added yet.</td></tr>
                 </tbody>
                 <tfoot class="bg-zinc-50 font-semibold">
                     <tr>
@@ -136,17 +128,16 @@
         const matchingOption = (code) => {
             const normalized = normalize(code);
             return Array.from(picker.options).find((option) => {
-                return [option.dataset.sku, option.dataset.imei1, option.dataset.imei2].some((value) => value && normalize(value) === normalized);
+                return [option.dataset.sku, option.dataset.imei].some((value) => value && normalize(value) === normalized);
             });
         };
 
         const refreshTotal = () => {
             let total = 0;
             rows.querySelectorAll('[data-cart-row]').forEach((row) => {
-                const qty = Number(row.querySelector('[data-cart-qty]').value || 0);
                 const price = Number(row.querySelector('[data-cart-price]').value || 0);
-                row.querySelector('[data-row-total]').textContent = money(qty * price);
-                total += qty * price;
+                row.querySelector('[data-row-total]').textContent = money(price);
+                total += price;
             });
             totalCell.textContent = money(total);
             emptyRow.hidden = rows.querySelectorAll('[data-cart-row]').length > 0;
@@ -155,30 +146,28 @@
         const addSelected = () => {
             const option = picker.selectedOptions[0];
             if (!option || !option.value) {
-                status.textContent = 'Select or scan an in-stock product first.';
+                status.textContent = 'Select or scan an available unit first.';
                 status.className = 'mt-1 block text-xs text-red-700';
                 return;
             }
 
-            const existing = rows.querySelector(`[data-product-id="${option.value}"]`);
-            if (existing) {
-                const qty = existing.querySelector('[data-cart-qty]');
-                qty.value = Number(qty.value) + 1;
-                refreshTotal();
+            if (rows.querySelector(`[data-unit-id="${option.value}"]`)) {
+                status.textContent = 'This unit is already in the cart.';
+                status.className = 'mt-1 block text-xs text-red-700';
                 return;
             }
 
             const price = Number(option.dataset.salePrice || 0).toFixed(3);
             const tr = document.createElement('tr');
             tr.dataset.cartRow = 'true';
-            tr.dataset.productId = option.value;
+            tr.dataset.unitId = option.value;
             tr.innerHTML = `
                 <td class="px-4 py-3">
-                    <input type="hidden" name="items[${rowIndex}][product_id]" value="${option.value}">
+                    <input type="hidden" name="items[${rowIndex}][product_unit_id]" value="${option.value}">
                     <div class="font-semibold">${option.dataset.name}</div>
-                    <div class="text-xs text-zinc-500">${option.dataset.brand || ''} ${option.dataset.sku ? 'SKU ' + option.dataset.sku : ''} ${option.dataset.imei1 ? 'IMEI ' + option.dataset.imei1 : ''}</div>
+                    <div class="text-xs text-zinc-500">${option.dataset.brand || ''} ${option.dataset.sku ? 'SKU ' + option.dataset.sku : ''} ${option.dataset.imei ? 'IMEI ' + option.dataset.imei : 'Unit #' + option.value}</div>
                 </td>
-                <td class="px-4 py-3"><input data-cart-qty type="number" min="1" max="${option.dataset.stock}" name="items[${rowIndex}][quantity]" value="1" class="w-20 rounded-md border border-zinc-300 px-2 py-1"></td>
+                <td class="px-4 py-3">1</td>
                 <td class="px-4 py-3"><input data-cart-price type="number" min="0" step="0.001" name="items[${rowIndex}][unit_price]" value="${price}" class="w-28 rounded-md border border-zinc-300 px-2 py-1"></td>
                 <td class="px-4 py-3" data-row-total>${money(price)}</td>
                 <td class="px-4 py-3 text-right"><button type="button" data-remove-row class="font-semibold text-red-700">Remove</button></td>
@@ -200,7 +189,7 @@
             event.preventDefault();
             const option = matchingOption(scanInput.value);
             if (!option) {
-                status.textContent = 'No product found for this serial, IMEI, or barcode.';
+                status.textContent = 'No available unit found for this serial, IMEI, or barcode.';
                 status.className = 'mt-1 block text-xs text-red-700';
                 scanInput.select();
                 return;
@@ -212,7 +201,7 @@
 
         addButton.addEventListener('click', addSelected);
         rows.addEventListener('input', (event) => {
-            if (event.target.matches('[data-cart-qty], [data-cart-price]')) {
+            if (event.target.matches('[data-cart-price]')) {
                 refreshTotal();
             }
         });

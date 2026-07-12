@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Product;
+use App\Models\ProductUnit;
 use App\Models\Order;
 use App\Models\Sale;
 use App\Models\User;
@@ -32,13 +33,18 @@ class SaleWorkflowTest extends TestCase
             'purchase_price' => 180,
             'sale_price' => 240,
         ]);
+        $unit = ProductUnit::create([
+            'product_id' => $product->id,
+            'imei' => '861234567890123',
+            'cost_price' => 180,
+            'status' => 'available',
+        ]);
 
         $this->post(route('sales.store'), [
             'ordered_at' => now()->format('Y-m-d'),
             'items' => [
                 [
-                    'product_id' => $product->id,
-                    'quantity' => 1,
+                    'product_unit_id' => $unit->id,
                     'unit_price' => 240,
                 ],
             ],
@@ -65,6 +71,7 @@ class SaleWorkflowTest extends TestCase
         ]);
 
         $this->assertSame(2, $product->fresh()->stock_quantity);
+        $this->assertSame('sold', $unit->fresh()->status);
     }
 
     public function test_salesman_can_delete_sale_and_restore_stock(): void
@@ -125,6 +132,12 @@ class SaleWorkflowTest extends TestCase
             'purchase_price' => 120,
             'sale_price' => 180,
         ]);
+        $unit = ProductUnit::create([
+            'product_id' => $product->id,
+            'imei' => '351111222233334',
+            'cost_price' => 120,
+            'status' => 'sold',
+        ]);
 
         $order = Order::create([
             'order_number' => 'WN-TEST-001',
@@ -136,6 +149,7 @@ class SaleWorkflowTest extends TestCase
 
         $order->items()->create([
             'product_id' => $product->id,
+            'product_unit_id' => $unit->id,
             'quantity' => 1,
             'unit_price' => 180,
             'total_amount' => 180,
@@ -145,6 +159,7 @@ class SaleWorkflowTest extends TestCase
             'order_id' => $order->id,
             'order_number' => $order->order_number,
             'product_id' => $product->id,
+            'product_unit_id' => $unit->id,
             'sold_at' => now(),
             'quantity' => 1,
             'unit_price' => 180,

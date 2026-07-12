@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Brand;
 use App\Models\Customer;
 use App\Models\Product;
+use App\Models\ProductUnit;
 use App\Models\Purchase;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -48,7 +49,16 @@ class PurchaseController extends Controller
                 $product = Product::create($this->productPayload($item));
                 $purchase = Purchase::create($this->purchasePayload($data, $item, $customer, $product));
 
-                $product->increment('stock_quantity', $purchase->quantity);
+                foreach ($item['units'] as $unit) {
+                    ProductUnit::create([
+                        'product_id' => $product->id,
+                        'imei' => $unit['imei'] ?? null,
+                        'cost_price' => $unit['cost_price'],
+                        'status' => 'available',
+                    ]);
+                }
+
+                $product->increment('stock_quantity', count($item['units']));
             }
         });
 
@@ -138,13 +148,12 @@ class PurchaseController extends Controller
             'products.*.category' => ['required', 'string', 'max:80'],
             'products.*.brand' => ['nullable', 'string', 'max:120'],
             'products.*.sku' => ['nullable', 'string', 'max:80', 'distinct', 'unique:products,sku'],
-            'products.*.imei1' => ['nullable', 'string', 'max:80', 'distinct', 'unique:products,imei1'],
-            'products.*.imei2' => ['nullable', 'string', 'max:80', 'distinct', 'unique:products,imei2'],
             'products.*.condition' => ['required', 'string', 'max:80'],
             'products.*.sale_price' => ['nullable', 'numeric', 'min:0'],
-            'products.*.quantity' => ['required', 'integer', 'min:1'],
-            'products.*.unit_price' => ['required', 'numeric', 'min:0'],
             'products.*.notes' => ['nullable', 'string', 'max:2000'],
+            'products.*.units' => ['required', 'array', 'min:1'],
+            'products.*.units.*.imei' => ['nullable', 'string', 'max:80', 'distinct', 'unique:product_units,imei'],
+            'products.*.units.*.cost_price' => ['required', 'numeric', 'min:0'],
         ]);
     }
 
@@ -155,11 +164,11 @@ class PurchaseController extends Controller
             'category' => $data['product_category'] ?? $data['category'],
             'brand' => $data['product_brand'] ?? $data['brand'] ?? null,
             'sku' => $data['product_sku'] ?? $data['sku'] ?? null,
-            'imei1' => $data['product_imei1'] ?? $data['imei1'] ?? null,
-            'imei2' => $data['product_imei2'] ?? $data['imei2'] ?? null,
+            'imei1' => $data['product_imei1'] ?? null,
+            'imei2' => $data['product_imei2'] ?? null,
             'condition' => $data['product_condition'] ?? $data['condition'],
             'stock_quantity' => $product?->stock_quantity ?? 0,
-            'purchase_price' => $data['unit_price'],
+            'purchase_price' => $data['unit_price'] ?? $this->averageCost($data['units']),
             'sale_price' => $data['sale_price'] ?? null,
             'notes' => $data['notes'] ?? null,
         ];
@@ -188,12 +197,24 @@ class PurchaseController extends Controller
             'product_id' => $product->id,
             'customer_id' => $customer->id,
             'purchased_at' => $data['purchased_at'],
-            'quantity' => $item['quantity'],
-            'unit_price' => $item['unit_price'],
-            'total_amount' => $item['quantity'] * $item['unit_price'],
+            'quantity' => $item['quantity'] ?? count($item['units']),
+            'unit_price' => $item['unit_price'] ?? $this->averageCost($item['units']),
+            'total_amount' => isset($item['quantity'], $item['unit_price'])
+                ? $item['quantity'] * $item['unit_price']
+                : $this->totalCost($item['units']),
             'payment_method' => $data['payment_method'] ?? null,
             'notes' => $item['notes'] ?? null,
         ];
+    }
+
+    private function averageCost(array $units): float
+    {
+        return count($units) ? $this->totalCost($units) / count($units) : 0;
+    }
+
+    private function totalCost(array $units): float
+    {
+        return collect($units)->sum(fn (array $unit) => (float) $unit['cost_price']);
     }
 
     private function categories(): array

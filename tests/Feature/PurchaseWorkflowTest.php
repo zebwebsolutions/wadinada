@@ -34,9 +34,11 @@ class PurchaseWorkflowTest extends TestCase
                     'imei2' => '353456789012346',
                     'condition' => 'Used',
                     'sale_price' => 250,
-                    'quantity' => 2,
-                    'unit_price' => 150,
                     'notes' => 'Clean device with box.',
+                    'units' => [
+                        ['imei' => '353456789012345', 'cost_price' => 150],
+                        ['imei' => '353456789012346', 'cost_price' => 150],
+                    ],
                 ],
                 [
                     'name' => 'iPad Air',
@@ -45,8 +47,9 @@ class PurchaseWorkflowTest extends TestCase
                     'imei1' => '353456789012347',
                     'condition' => 'Used',
                     'sale_price' => 180,
-                    'quantity' => 1,
-                    'unit_price' => 100,
+                    'units' => [
+                        ['imei' => '353456789012347', 'cost_price' => 100],
+                    ],
                 ],
             ],
             'customer_name' => 'Ahmad Saleh',
@@ -75,11 +78,21 @@ class PurchaseWorkflowTest extends TestCase
         $this->assertDatabaseHas('products', [
             'name' => 'iPhone 15 Pro',
             'brand' => 'Apple',
-            'imei1' => '353456789012345',
-            'imei2' => '353456789012346',
             'stock_quantity' => 2,
             'purchase_price' => 150,
             'sale_price' => 250,
+        ]);
+
+        $this->assertDatabaseHas('product_units', [
+            'imei' => '353456789012345',
+            'cost_price' => 150,
+            'status' => 'available',
+        ]);
+
+        $this->assertDatabaseHas('product_units', [
+            'imei' => '353456789012346',
+            'cost_price' => 150,
+            'status' => 'available',
         ]);
 
         $this->assertDatabaseHas('products', [

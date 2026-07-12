@@ -76,9 +76,10 @@
                                     @if ($item->product->sku || $item->product->imei1 || $item->product->imei2)
                                         <br><span>
                                             {{ $item->product->sku ? 'SKU: '.$item->product->sku : '' }}
-                                            {{ $item->product->imei1 ? ' IMEI1: '.$item->product->imei1 : '' }}
-                                            {{ $item->product->imei2 ? ' IMEI2: '.$item->product->imei2 : '' }}
+                                            {{ $item->unit?->imei ? ' IMEI: '.$item->unit->imei : '' }}
                                         </span>
+                                    @elseif ($item->unit?->imei)
+                                        <br><span>IMEI: {{ $item->unit->imei }}</span>
                                     @endif
                                 </td>
                                 <td>{{ $item->quantity }}</td>

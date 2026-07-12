@@ -58,5 +58,31 @@
                 </table>
             </div>
         </section>
+
+        <section class="rounded-md border border-zinc-200 bg-white xl:col-span-3">
+            <div class="border-b border-zinc-200 px-5 py-4">
+                <h2 class="font-semibold">Units</h2>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-zinc-200 text-sm">
+                    <thead class="bg-zinc-50 text-left text-xs font-semibold uppercase text-zinc-500">
+                        <tr>
+                            <th class="px-5 py-3">IMEI</th>
+                            <th class="px-5 py-3">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-zinc-100">
+                        @forelse ($product->units as $unit)
+                            <tr>
+                                <td class="px-5 py-3 font-medium">{{ $unit->imei ?: 'Unit #'.$unit->id }}</td>
+                                <td class="px-5 py-3">{{ ucfirst($unit->status) }}</td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="2" class="px-5 py-8 text-center text-zinc-500">No units recorded for this product.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </section>
     </div>
 </x-layouts.app>

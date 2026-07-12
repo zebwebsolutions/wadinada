@@ -19,7 +19,10 @@ class ProductController extends Controller
                         ->orWhere('brand', 'like', "%{$search}%")
                         ->orWhere('sku', 'like', "%{$search}%")
                         ->orWhere('imei1', 'like', "%{$search}%")
-                        ->orWhere('imei2', 'like', "%{$search}%");
+                        ->orWhere('imei2', 'like', "%{$search}%")
+                        ->orWhereHas('units', function ($query) use ($search) {
+                            $query->where('imei', 'like', "%{$search}%");
+                        });
                 });
             })
             ->latest()
@@ -48,7 +51,7 @@ class ProductController extends Controller
 
     public function show(Product $product): View
     {
-        $product->load(['purchases.customer', 'sales']);
+        $product->load(['purchases.customer', 'sales', 'units']);
 
         return view('products.show', compact('product'));
     }

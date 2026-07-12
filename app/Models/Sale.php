@@ -12,6 +12,7 @@ class Sale extends Model
 
     protected $fillable = [
         'product_id',
+        'product_unit_id',
         'order_id',
         'order_number',
         'sold_at',
@@ -38,5 +39,10 @@ class Sale extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function unit(): BelongsTo
+    {
+        return $this->belongsTo(ProductUnit::class, 'product_unit_id');
     }
 }

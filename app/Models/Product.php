@@ -39,4 +39,14 @@ class Product extends Model
     {
         return $this->hasMany(OrderItem::class);
     }
+
+    public function units(): HasMany
+    {
+        return $this->hasMany(ProductUnit::class);
+    }
+
+    public function availableUnits(): HasMany
+    {
+        return $this->hasMany(ProductUnit::class)->where('status', 'available');
+    }
 }
