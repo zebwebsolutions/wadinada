@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Models\Order;
 use App\Models\Sale;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -24,10 +25,6 @@ class SaleController extends Controller
     public function create(): View
     {
         return view('sales.create', [
-            'sale' => new Sale([
-                'sold_at' => now(),
-                'quantity' => 1,
-            ]),
             'products' => Product::where('stock_quantity', '>', 0)->orderBy('name')->get(),
             'paymentMethods' => $this->paymentMethods(),
         ]);
@@ -35,22 +32,79 @@ class SaleController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $data = $this->validatedSale($request);
+        $data = $this->validatedCheckout($request);
 
-        DB::transaction(function () use ($data) {
-            $product = Product::lockForUpdate()->findOrFail($data['product_id']);
+        $order = DB::transaction(function () use ($data, $request) {
+            $products = Product::lockForUpdate()
+                ->whereIn('id', collect($data['items'])->pluck('product_id'))
+                ->get()
+                ->keyBy('id');
 
-            if ($product->stock_quantity < $data['quantity']) {
-                throw ValidationException::withMessages([
-                    'quantity' => 'Only '.$product->stock_quantity.' item(s) are available in stock.',
-                ]);
+            foreach ($data['items'] as $index => $item) {
+                $product = $products->get($item['product_id']);
+
+                if (! $product || $product->stock_quantity < $item['quantity']) {
+                    throw ValidationException::withMessages([
+                        'items.'.$index.'.quantity' => 'Only '.($product?->stock_quantity ?? 0).' item(s) are available in stock.',
+                    ]);
+                }
             }
 
-            Sale::create($this->salePayload($data));
-            $product->decrement('stock_quantity', $data['quantity']);
+            $order = Order::create([
+                'order_number' => $this->nextOrderNumber(),
+                'ordered_at' => $data['ordered_at'],
+                'customer_name' => $data['customer_name'] ?? null,
+                'customer_phone' => $data['customer_phone'] ?? null,
+                'customer_id_number' => $data['customer_id_number'] ?? null,
+                'kuwait_id_path' => $request->hasFile('kuwait_id')
+                    ? $request->file('kuwait_id')->store('order-ids', 'public')
+                    : null,
+                'payment_method' => $data['payment_method'] ?? null,
+                'salesman_name' => $data['salesman_name'] ?? null,
+                'total_amount' => 0,
+                'notes' => $data['notes'] ?? null,
+            ]);
+
+            $total = 0;
+
+            foreach ($data['items'] as $item) {
+                $product = $products->get($item['product_id']);
+                $lineTotal = $item['quantity'] * $item['unit_price'];
+                $total += $lineTotal;
+
+                $order->items()->create([
+                    'product_id' => $product->id,
+                    'quantity' => $item['quantity'],
+                    'unit_price' => $item['unit_price'],
+                    'total_amount' => $lineTotal,
+                ]);
+
+                Sale::create([
+                    'order_id' => $order->id,
+                    'order_number' => $order->order_number,
+                    'product_id' => $product->id,
+                    'sold_at' => $data['ordered_at'],
+                    'quantity' => $item['quantity'],
+                    'unit_price' => $item['unit_price'],
+                    'total_amount' => $lineTotal,
+                    'payment_method' => $data['payment_method'] ?? null,
+                    'salesman_name' => $data['salesman_name'] ?? null,
+                    'customer_name' => $data['customer_name'] ?? null,
+                    'customer_phone' => $data['customer_phone'] ?? null,
+                    'customer_id_number' => $data['customer_id_number'] ?? null,
+                    'kuwait_id_path' => $order->kuwait_id_path,
+                    'notes' => $data['notes'] ?? null,
+                ]);
+
+                $product->decrement('stock_quantity', $item['quantity']);
+            }
+
+            $order->update(['total_amount' => $total]);
+
+            return $order;
         });
 
-        return redirect()->route('sales.index')->with('status', 'Sale recorded successfully.');
+        return redirect()->route('orders.show', $order)->with('status', 'Order checked out successfully.');
     }
 
     public function show(Sale $sale): View
@@ -118,6 +172,24 @@ class SaleController extends Controller
         ]);
     }
 
+    private function validatedCheckout(Request $request): array
+    {
+        return $request->validate([
+            'ordered_at' => ['required', 'date'],
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.product_id' => ['required', 'exists:products,id'],
+            'items.*.quantity' => ['required', 'integer', 'min:1'],
+            'items.*.unit_price' => ['required', 'numeric', 'min:0'],
+            'payment_method' => ['nullable', 'string', 'max:80'],
+            'salesman_name' => ['nullable', 'string', 'max:255'],
+            'customer_name' => ['nullable', 'string', 'max:255'],
+            'customer_phone' => ['nullable', 'string', 'max:40'],
+            'customer_id_number' => ['nullable', 'string', 'max:80'],
+            'kuwait_id' => ['nullable', 'image', 'max:10240'],
+            'notes' => ['nullable', 'string', 'max:2000'],
+        ]);
+    }
+
     private function salePayload(array $data): array
     {
         return [
@@ -138,5 +210,10 @@ class SaleController extends Controller
     private function paymentMethods(): array
     {
         return ['Cash', 'KNET', 'Bank Transfer', 'Link Payment', 'Other'];
+    }
+
+    private function nextOrderNumber(): string
+    {
+        return 'WN-'.now()->format('Ymd-His').'-'.str_pad((string) random_int(1, 999), 3, '0', STR_PAD_LEFT);
     }
 }

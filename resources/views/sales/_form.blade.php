@@ -2,49 +2,98 @@
 
 <div class="grid gap-6 xl:grid-cols-3">
     <section class="rounded-md border border-zinc-200 bg-white p-5 xl:col-span-2">
-        <h2 class="mb-4 font-semibold">Sale Details</h2>
-        <div class="grid gap-5 lg:grid-cols-2">
+        <h2 class="mb-4 font-semibold">Cart</h2>
+
+        <div class="grid gap-4 lg:grid-cols-5">
             <label class="block lg:col-span-2">
-                <span class="text-sm font-semibold">Scan barcode</span>
-                <input type="text" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" data-sale-barcode-scan placeholder="Scan barcode to select product" class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-zinc-950 focus:outline-none">
-                <span data-sale-barcode-status class="mt-1 block text-xs text-zinc-500">Scan an item barcode or type an IMEI here. The matching product will be selected automatically.</span>
+                <span class="text-sm font-semibold">Scan serial / IMEI / barcode</span>
+                <input type="text" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" data-sale-scan class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-zinc-950 focus:outline-none">
+                <span data-sale-status class="mt-1 block text-xs text-zinc-500">Scan or type a SKU, serial, IMEI 1, or IMEI 2.</span>
             </label>
 
             <label class="block lg:col-span-2">
                 <span class="text-sm font-semibold">Product</span>
-                <select name="product_id" required class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-zinc-950 focus:outline-none">
+                <select data-product-picker class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-zinc-950 focus:outline-none">
                     <option value="">Select product</option>
                     @foreach ($products as $product)
-                        <option value="{{ $product->id }}" data-sku="{{ $product->sku }}" data-imei1="{{ $product->imei1 }}" data-imei2="{{ $product->imei2 }}" data-sale-price="{{ $product->sale_price }}" @selected(old('product_id', $sale->product_id) == $product->id)>
+                        <option
+                            value="{{ $product->id }}"
+                            data-name="{{ $product->name }}"
+                            data-brand="{{ $product->brand }}"
+                            data-sku="{{ $product->sku }}"
+                            data-imei1="{{ $product->imei1 }}"
+                            data-imei2="{{ $product->imei2 }}"
+                            data-stock="{{ $product->stock_quantity }}"
+                            data-sale-price="{{ $product->sale_price ?: 0 }}"
+                        >
                             {{ $product->name }} {{ $product->brand ? '- '.$product->brand : '' }} ({{ $product->stock_quantity }} in stock)
                         </option>
                     @endforeach
                 </select>
-                @error('product_id') <span class="mt-1 block text-sm text-red-700">{{ $message }}</span> @enderror
             </label>
 
+            <button type="button" data-add-to-cart class="mt-6 rounded-md bg-zinc-950 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800">Add Item</button>
+        </div>
+
+        <div class="mt-5 overflow-x-auto rounded-md border border-zinc-200">
+            <table class="min-w-full divide-y divide-zinc-200 text-sm">
+                <thead class="bg-zinc-50 text-left text-xs font-semibold uppercase text-zinc-500">
+                    <tr>
+                        <th class="px-4 py-3">Product</th>
+                        <th class="px-4 py-3">Qty</th>
+                        <th class="px-4 py-3">Price KD</th>
+                        <th class="px-4 py-3">Total</th>
+                        <th class="px-4 py-3"></th>
+                    </tr>
+                </thead>
+                <tbody data-cart-rows class="divide-y divide-zinc-100">
+                    <tr data-empty-cart><td colspan="5" class="px-4 py-8 text-center text-zinc-500">No items added yet.</td></tr>
+                </tbody>
+                <tfoot class="bg-zinc-50 font-semibold">
+                    <tr>
+                        <td colspan="3" class="px-4 py-3 text-right">Cart total</td>
+                        <td class="px-4 py-3" data-cart-total>0.000 KD</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        @error('items') <span class="mt-2 block text-sm text-red-700">{{ $message }}</span> @enderror
+    </section>
+
+    <section class="rounded-md border border-zinc-200 bg-white p-5">
+        <h2 class="mb-4 font-semibold">Checkout</h2>
+        <div class="space-y-4">
             <label class="block">
-                <span class="text-sm font-semibold">Sale date</span>
-                <input type="date" name="sold_at" value="{{ old('sold_at', optional($sale->sold_at)->format('Y-m-d') ?? now()->format('Y-m-d')) }}" required class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-zinc-950 focus:outline-none">
-                @error('sold_at') <span class="mt-1 block text-sm text-red-700">{{ $message }}</span> @enderror
+                <span class="text-sm font-semibold">Order date</span>
+                <input type="date" name="ordered_at" value="{{ old('ordered_at', now()->format('Y-m-d')) }}" required class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-zinc-950 focus:outline-none">
+                @error('ordered_at') <span class="mt-1 block text-sm text-red-700">{{ $message }}</span> @enderror
             </label>
 
             <label class="block">
                 <span class="text-sm font-semibold">Salesman name</span>
-                <input name="salesman_name" value="{{ old('salesman_name', $sale->salesman_name) }}" class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-zinc-950 focus:outline-none">
-                @error('salesman_name') <span class="mt-1 block text-sm text-red-700">{{ $message }}</span> @enderror
+                <input name="salesman_name" value="{{ old('salesman_name') }}" class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-zinc-950 focus:outline-none">
             </label>
 
             <label class="block">
-                <span class="text-sm font-semibold">Quantity sold</span>
-                <input type="number" min="1" name="quantity" value="{{ old('quantity', $sale->quantity ?? 1) }}" required class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-zinc-950 focus:outline-none">
-                @error('quantity') <span class="mt-1 block text-sm text-red-700">{{ $message }}</span> @enderror
+                <span class="text-sm font-semibold">Client name</span>
+                <input name="customer_name" value="{{ old('customer_name') }}" class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-zinc-950 focus:outline-none">
             </label>
 
             <label class="block">
-                <span class="text-sm font-semibold">Sale price KD</span>
-                <input type="number" min="0" step="0.001" name="unit_price" value="{{ old('unit_price', $sale->unit_price) }}" required class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-zinc-950 focus:outline-none">
-                @error('unit_price') <span class="mt-1 block text-sm text-red-700">{{ $message }}</span> @enderror
+                <span class="text-sm font-semibold">Client phone</span>
+                <input name="customer_phone" value="{{ old('customer_phone') }}" class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-zinc-950 focus:outline-none">
+            </label>
+
+            <label class="block">
+                <span class="text-sm font-semibold">Client ID</span>
+                <input name="customer_id_number" value="{{ old('customer_id_number') }}" class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-zinc-950 focus:outline-none">
+            </label>
+
+            <label class="block">
+                <span class="text-sm font-semibold">Kuwait ID image</span>
+                <input type="file" name="kuwait_id" accept="image/*" class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-950 focus:outline-none">
+                <span class="mt-1 block text-xs text-zinc-500">Optional. Image files up to 10 MB.</span>
             </label>
 
             <label class="block">
@@ -52,96 +101,125 @@
                 <select name="payment_method" class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-zinc-950 focus:outline-none">
                     <option value="">Not specified</option>
                     @foreach ($paymentMethods as $method)
-                        <option value="{{ $method }}" @selected(old('payment_method', $sale->payment_method) === $method)>{{ $method }}</option>
+                        <option value="{{ $method }}" @selected(old('payment_method') === $method)>{{ $method }}</option>
                     @endforeach
                 </select>
             </label>
 
-            <label class="block lg:col-span-2">
+            <label class="block">
                 <span class="text-sm font-semibold">Notes</span>
-                <textarea name="notes" rows="4" class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-zinc-950 focus:outline-none">{{ old('notes', $sale->notes) }}</textarea>
-            </label>
-        </div>
-    </section>
-
-    <section class="rounded-md border border-zinc-200 bg-white p-5">
-        <h2 class="mb-4 font-semibold">Buyer Details</h2>
-        <div class="space-y-4">
-            <label class="block">
-                <span class="text-sm font-semibold">Customer name</span>
-                <input name="customer_name" value="{{ old('customer_name', $sale->customer_name) }}" class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-zinc-950 focus:outline-none">
-                @error('customer_name') <span class="mt-1 block text-sm text-red-700">{{ $message }}</span> @enderror
-            </label>
-
-            <label class="block">
-                <span class="text-sm font-semibold">Email</span>
-                <input type="email" name="customer_email" value="{{ old('customer_email', $sale->customer_email) }}" class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-zinc-950 focus:outline-none">
-                @error('customer_email') <span class="mt-1 block text-sm text-red-700">{{ $message }}</span> @enderror
-            </label>
-
-            <label class="block">
-                <span class="text-sm font-semibold">Phone</span>
-                <input name="customer_phone" value="{{ old('customer_phone', $sale->customer_phone) }}" class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-zinc-950 focus:outline-none">
-                @error('customer_phone') <span class="mt-1 block text-sm text-red-700">{{ $message }}</span> @enderror
+                <textarea name="notes" rows="4" class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-zinc-950 focus:outline-none">{{ old('notes') }}</textarea>
             </label>
         </div>
     </section>
 </div>
 
 <div class="mt-6 flex items-center gap-3">
-    <button class="rounded-md bg-zinc-950 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800">{{ $buttonLabel }}</button>
-    <a href="{{ route('sales.index') }}" class="text-sm font-semibold text-zinc-600 hover:text-zinc-950">Cancel</a>
+    <button class="rounded-md bg-zinc-950 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800">Checkout & Print</button>
+    <a href="{{ route('orders.index') }}" class="text-sm font-semibold text-zinc-600 hover:text-zinc-950">Cancel</a>
 </div>
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        const scanInput = document.querySelector('[data-sale-barcode-scan]');
-        const status = document.querySelector('[data-sale-barcode-status]');
-        const productSelect = document.querySelector('select[name="product_id"]');
-        const priceInput = document.querySelector('input[name="unit_price"]');
-        const quantityInput = document.querySelector('input[name="quantity"]');
+        const scanInput = document.querySelector('[data-sale-scan]');
+        const status = document.querySelector('[data-sale-status]');
+        const picker = document.querySelector('[data-product-picker]');
+        const addButton = document.querySelector('[data-add-to-cart]');
+        const rows = document.querySelector('[data-cart-rows]');
+        const emptyRow = document.querySelector('[data-empty-cart]');
+        const totalCell = document.querySelector('[data-cart-total]');
+        let rowIndex = 0;
 
-        if (!scanInput || !productSelect) {
-            return;
-        }
+        const normalize = (value) => value.trim().replace(/\s+/g, '').toLowerCase();
+        const money = (value) => Number(value || 0).toFixed(3) + ' KD';
 
-        const normalizeCode = (value) => value.trim().replace(/\s+/g, '').toLowerCase();
-
-        const findProductOption = (barcode) => {
-            const normalized = normalizeCode(barcode);
-
-            return Array.from(productSelect.options).find((option) => {
-                return [option.dataset.sku, option.dataset.imei1, option.dataset.imei2].some((value) => {
-                    return value && normalizeCode(value) === normalized;
-                });
+        const matchingOption = (code) => {
+            const normalized = normalize(code);
+            return Array.from(picker.options).find((option) => {
+                return [option.dataset.sku, option.dataset.imei1, option.dataset.imei2].some((value) => value && normalize(value) === normalized);
             });
         };
 
-        const selectScannedProduct = () => {
-            const option = findProductOption(scanInput.value);
+        const refreshTotal = () => {
+            let total = 0;
+            rows.querySelectorAll('[data-cart-row]').forEach((row) => {
+                const qty = Number(row.querySelector('[data-cart-qty]').value || 0);
+                const price = Number(row.querySelector('[data-cart-price]').value || 0);
+                row.querySelector('[data-row-total]').textContent = money(qty * price);
+                total += qty * price;
+            });
+            totalCell.textContent = money(total);
+            emptyRow.hidden = rows.querySelectorAll('[data-cart-row]').length > 0;
+        };
 
+        const addSelected = () => {
+            const option = picker.selectedOptions[0];
+            if (!option || !option.value) {
+                status.textContent = 'Select or scan an in-stock product first.';
+                status.className = 'mt-1 block text-xs text-red-700';
+                return;
+            }
+
+            const existing = rows.querySelector(`[data-product-id="${option.value}"]`);
+            if (existing) {
+                const qty = existing.querySelector('[data-cart-qty]');
+                qty.value = Number(qty.value) + 1;
+                refreshTotal();
+                return;
+            }
+
+            const price = Number(option.dataset.salePrice || 0).toFixed(3);
+            const tr = document.createElement('tr');
+            tr.dataset.cartRow = 'true';
+            tr.dataset.productId = option.value;
+            tr.innerHTML = `
+                <td class="px-4 py-3">
+                    <input type="hidden" name="items[${rowIndex}][product_id]" value="${option.value}">
+                    <div class="font-semibold">${option.dataset.name}</div>
+                    <div class="text-xs text-zinc-500">${option.dataset.brand || ''} ${option.dataset.sku ? 'SKU ' + option.dataset.sku : ''} ${option.dataset.imei1 ? 'IMEI ' + option.dataset.imei1 : ''}</div>
+                </td>
+                <td class="px-4 py-3"><input data-cart-qty type="number" min="1" max="${option.dataset.stock}" name="items[${rowIndex}][quantity]" value="1" class="w-20 rounded-md border border-zinc-300 px-2 py-1"></td>
+                <td class="px-4 py-3"><input data-cart-price type="number" min="0" step="0.001" name="items[${rowIndex}][unit_price]" value="${price}" class="w-28 rounded-md border border-zinc-300 px-2 py-1"></td>
+                <td class="px-4 py-3" data-row-total>${money(price)}</td>
+                <td class="px-4 py-3 text-right"><button type="button" data-remove-row class="font-semibold text-red-700">Remove</button></td>
+            `;
+            rows.appendChild(tr);
+            rowIndex += 1;
+            scanInput.value = '';
+            status.textContent = 'Added to cart: ' + option.textContent.trim();
+            status.className = 'mt-1 block text-xs text-emerald-700';
+            refreshTotal();
+            scanInput.focus();
+        };
+
+        scanInput.addEventListener('keydown', (event) => {
+            if (event.key !== 'Enter') {
+                return;
+            }
+
+            event.preventDefault();
+            const option = matchingOption(scanInput.value);
             if (!option) {
-                status.textContent = 'No in-stock product found for this barcode or IMEI.';
+                status.textContent = 'No product found for this serial, IMEI, or barcode.';
                 status.className = 'mt-1 block text-xs text-red-700';
                 scanInput.select();
                 return;
             }
 
-            productSelect.value = option.value;
+            picker.value = option.value;
+            addSelected();
+        });
 
-            if (priceInput && option.dataset.salePrice && !priceInput.value) {
-                priceInput.value = option.dataset.salePrice;
+        addButton.addEventListener('click', addSelected);
+        rows.addEventListener('input', (event) => {
+            if (event.target.matches('[data-cart-qty], [data-cart-price]')) {
+                refreshTotal();
             }
-
-            status.textContent = 'Product selected: ' + option.textContent.trim();
-            status.className = 'mt-1 block text-xs text-emerald-700';
-            quantityInput?.focus();
-        };
-
-        scanInput.addEventListener('keydown', (event) => {
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                selectScannedProduct();
+        });
+        rows.addEventListener('click', (event) => {
+            if (event.target.matches('[data-remove-row]')) {
+                event.target.closest('[data-cart-row]').remove();
+                refreshTotal();
             }
         });
     });

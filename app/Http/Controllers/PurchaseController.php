@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Brand;
 use App\Models\Customer;
 use App\Models\Product;
 use App\Models\Purchase;
@@ -29,6 +30,7 @@ class PurchaseController extends Controller
                 'quantity' => 1,
             ]),
             'product' => new Product(['condition' => 'Used']),
+            'brands' => Brand::orderBy('name')->get(),
             'categories' => $this->categories(),
             'conditions' => $this->conditions(),
             'paymentMethods' => $this->paymentMethods(),
@@ -40,11 +42,14 @@ class PurchaseController extends Controller
         $data = $this->validatedPurchase($request);
 
         DB::transaction(function () use ($data, $request) {
-            $product = Product::create($this->productPayload($data));
             $customer = $this->storeCustomer($data, $request);
-            $purchase = Purchase::create($this->purchasePayload($data, $customer, $product));
 
-            $product->increment('stock_quantity', $purchase->quantity);
+            foreach ($data['products'] as $item) {
+                $product = Product::create($this->productPayload($item));
+                $purchase = Purchase::create($this->purchasePayload($data, $item, $customer, $product));
+
+                $product->increment('stock_quantity', $purchase->quantity);
+            }
         });
 
         return redirect()->route('purchases.index')->with('status', 'Customer purchase recorded successfully.');
@@ -64,6 +69,7 @@ class PurchaseController extends Controller
         return view('purchases.edit', [
             'purchase' => $purchase,
             'product' => $purchase->product,
+            'brands' => Brand::orderBy('name')->get(),
             'categories' => $this->categories(),
             'conditions' => $this->conditions(),
             'paymentMethods' => $this->paymentMethods(),
@@ -80,7 +86,7 @@ class PurchaseController extends Controller
             $product->update($this->productPayload($data, $product));
             $customer = $this->storeCustomer($data, $request, $purchase->customer);
 
-            $purchase->update($this->purchasePayload($data, $customer, $product));
+            $purchase->update($this->purchasePayload($data, $data, $customer, $product));
 
             $product->decrement('stock_quantity', $oldQuantity);
             $product->increment('stock_quantity', $purchase->quantity);
@@ -101,37 +107,57 @@ class PurchaseController extends Controller
 
     private function validatedPurchase(Request $request, ?Product $product = null): array
     {
-        return $request->validate([
-            'product_name' => ['required', 'string', 'max:255'],
-            'product_category' => ['required', 'string', 'max:80'],
-            'product_brand' => ['nullable', 'string', 'max:120'],
-            'product_sku' => ['nullable', 'string', 'max:80', 'unique:products,sku,'.($product?->id ?? 'NULL')],
-            'product_imei1' => ['nullable', 'string', 'max:80', 'unique:products,imei1,'.($product?->id ?? 'NULL')],
-            'product_imei2' => ['nullable', 'string', 'max:80', 'unique:products,imei2,'.($product?->id ?? 'NULL')],
-            'product_condition' => ['required', 'string', 'max:80'],
-            'sale_price' => ['nullable', 'numeric', 'min:0'],
+        $rules = [
             'purchased_at' => ['required', 'date'],
-            'quantity' => ['required', 'integer', 'min:1'],
-            'unit_price' => ['required', 'numeric', 'min:0'],
             'payment_method' => ['nullable', 'string', 'max:80'],
-            'notes' => ['nullable', 'string', 'max:2000'],
             'customer_name' => ['required', 'string', 'max:255'],
             'customer_email' => ['nullable', 'email', 'max:255'],
             'customer_phone' => ['required', 'string', 'max:40'],
             'customer_kuwait_id' => ['nullable', 'image', 'max:10240'],
+        ];
+
+        if ($product) {
+            return $request->validate($rules + [
+                'product_name' => ['required', 'string', 'max:255'],
+                'product_category' => ['required', 'string', 'max:80'],
+                'product_brand' => ['nullable', 'string', 'max:120'],
+                'product_sku' => ['nullable', 'string', 'max:80', 'unique:products,sku,'.($product->id)],
+                'product_imei1' => ['nullable', 'string', 'max:80', 'unique:products,imei1,'.($product->id)],
+                'product_imei2' => ['nullable', 'string', 'max:80', 'unique:products,imei2,'.($product->id)],
+                'product_condition' => ['required', 'string', 'max:80'],
+                'sale_price' => ['nullable', 'numeric', 'min:0'],
+                'quantity' => ['required', 'integer', 'min:1'],
+                'unit_price' => ['required', 'numeric', 'min:0'],
+                'notes' => ['nullable', 'string', 'max:2000'],
+            ]);
+        }
+
+        return $request->validate($rules + [
+            'products' => ['required', 'array', 'min:1'],
+            'products.*.name' => ['required', 'string', 'max:255'],
+            'products.*.category' => ['required', 'string', 'max:80'],
+            'products.*.brand' => ['nullable', 'string', 'max:120'],
+            'products.*.sku' => ['nullable', 'string', 'max:80', 'distinct', 'unique:products,sku'],
+            'products.*.imei1' => ['nullable', 'string', 'max:80', 'distinct', 'unique:products,imei1'],
+            'products.*.imei2' => ['nullable', 'string', 'max:80', 'distinct', 'unique:products,imei2'],
+            'products.*.condition' => ['required', 'string', 'max:80'],
+            'products.*.sale_price' => ['nullable', 'numeric', 'min:0'],
+            'products.*.quantity' => ['required', 'integer', 'min:1'],
+            'products.*.unit_price' => ['required', 'numeric', 'min:0'],
+            'products.*.notes' => ['nullable', 'string', 'max:2000'],
         ]);
     }
 
     private function productPayload(array $data, ?Product $product = null): array
     {
         return [
-            'name' => $data['product_name'],
-            'category' => $data['product_category'],
-            'brand' => $data['product_brand'] ?? null,
-            'sku' => $data['product_sku'] ?? null,
-            'imei1' => $data['product_imei1'] ?? null,
-            'imei2' => $data['product_imei2'] ?? null,
-            'condition' => $data['product_condition'],
+            'name' => $data['product_name'] ?? $data['name'],
+            'category' => $data['product_category'] ?? $data['category'],
+            'brand' => $data['product_brand'] ?? $data['brand'] ?? null,
+            'sku' => $data['product_sku'] ?? $data['sku'] ?? null,
+            'imei1' => $data['product_imei1'] ?? $data['imei1'] ?? null,
+            'imei2' => $data['product_imei2'] ?? $data['imei2'] ?? null,
+            'condition' => $data['product_condition'] ?? $data['condition'],
             'stock_quantity' => $product?->stock_quantity ?? 0,
             'purchase_price' => $data['unit_price'],
             'sale_price' => $data['sale_price'] ?? null,
@@ -156,17 +182,17 @@ class PurchaseController extends Controller
         return Customer::updateOrCreate($lookup, $payload);
     }
 
-    private function purchasePayload(array $data, Customer $customer, Product $product): array
+    private function purchasePayload(array $data, array $item, Customer $customer, Product $product): array
     {
         return [
             'product_id' => $product->id,
             'customer_id' => $customer->id,
             'purchased_at' => $data['purchased_at'],
-            'quantity' => $data['quantity'],
-            'unit_price' => $data['unit_price'],
-            'total_amount' => $data['quantity'] * $data['unit_price'],
+            'quantity' => $item['quantity'],
+            'unit_price' => $item['unit_price'],
+            'total_amount' => $item['quantity'] * $item['unit_price'],
             'payment_method' => $data['payment_method'] ?? null,
-            'notes' => $data['notes'] ?? null,
+            'notes' => $item['notes'] ?? null,
         ];
     }
 

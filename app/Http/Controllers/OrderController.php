@@ -2,22 +2,23 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Sale;
+use App\Models\Order;
 use Illuminate\View\View;
 
 class OrderController extends Controller
 {
     public function index(): View
     {
-        $orders = Sale::query()
-            ->with('product')
+        $orders = Order::query()
+            ->with('items.product')
             ->when(request('search'), function ($query, string $search) {
                 $query->where(function ($query) use ($search) {
-                    $query->where('id', $search)
+                    $query->where('order_number', 'like', "%{$search}%")
                         ->orWhere('customer_name', 'like', "%{$search}%")
                         ->orWhere('customer_phone', 'like', "%{$search}%")
+                        ->orWhere('customer_id_number', 'like', "%{$search}%")
                         ->orWhere('salesman_name', 'like', "%{$search}%")
-                        ->orWhereHas('product', function ($query) use ($search) {
+                        ->orWhereHas('items.product', function ($query) use ($search) {
                             $query->where('name', 'like', "%{$search}%")
                                 ->orWhere('brand', 'like', "%{$search}%")
                                 ->orWhere('sku', 'like', "%{$search}%")
@@ -26,23 +27,23 @@ class OrderController extends Controller
                         });
                 });
             })
-            ->latest('sold_at')
+            ->latest('ordered_at')
             ->paginate(12)
             ->withQueryString();
 
         return view('orders.index', compact('orders'));
     }
 
-    public function show(Sale $order): View
+    public function show(Order $order): View
     {
-        $order->load('product');
+        $order->load('items.product');
 
         return view('orders.show', compact('order'));
     }
 
-    public function print(Sale $order): View
+    public function print(Order $order): View
     {
-        $order->load('product');
+        $order->load('items.product');
 
         return view('orders.print', compact('order'));
     }

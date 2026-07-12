@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Brand;
 use App\Models\Product;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -32,6 +33,7 @@ class ProductController extends Controller
     {
         return view('products.create', [
             'product' => new Product(['condition' => 'Used']),
+            'brands' => Brand::orderBy('name')->get(),
             'categories' => $this->categories(),
             'conditions' => $this->conditions(),
         ]);
@@ -55,6 +57,7 @@ class ProductController extends Controller
     {
         return view('products.edit', [
             'product' => $product,
+            'brands' => Brand::orderBy('name')->get(),
             'categories' => $this->categories(),
             'conditions' => $this->conditions(),
         ]);

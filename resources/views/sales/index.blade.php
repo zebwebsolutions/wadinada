@@ -31,8 +31,11 @@
                             <td class="px-5 py-4">{{ number_format($sale->total_amount, 3) }} KD</td>
                             <td class="px-5 py-4 text-right">
                                 <div class="flex justify-end gap-3">
+                                    @if ($sale->order_id)
+                                        <a href="{{ route('orders.show', $sale->order_id) }}" class="font-semibold text-zinc-700 hover:text-zinc-950">Order</a>
+                                        <a href="{{ route('orders.print', $sale->order_id) }}" target="_blank" class="font-semibold text-zinc-700 hover:text-zinc-950">Print</a>
+                                    @endif
                                     <a href="{{ route('sales.edit', $sale) }}" class="font-semibold text-zinc-700 hover:text-zinc-950">Edit</a>
-                                    <a href="{{ route('orders.print', $sale) }}" target="_blank" class="font-semibold text-zinc-700 hover:text-zinc-950">Print</a>
                                     <form method="POST" action="{{ route('sales.destroy', $sale) }}" onsubmit="return confirm('Delete this sale? Product stock will be restored by this sale quantity.');">
                                         @csrf
                                         @method('DELETE')

@@ -19,7 +19,12 @@
 
     <label class="block">
         <span class="text-sm font-semibold">Brand</span>
-        <input name="brand" value="{{ old('brand', $product->brand) }}" class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-zinc-950 focus:outline-none">
+        <select name="brand" class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-zinc-950 focus:outline-none">
+            <option value="">Select brand</option>
+            @foreach ($brands as $brand)
+                <option value="{{ $brand->name }}" @selected(old('brand', $product->brand) === $brand->name)>{{ $brand->name }}</option>
+            @endforeach
+        </select>
     </label>
 
     <label class="block">

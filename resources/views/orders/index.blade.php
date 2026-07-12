@@ -23,15 +23,15 @@
                 <tbody class="divide-y divide-zinc-100">
                     @forelse ($orders as $order)
                         <tr>
-                            <td class="px-5 py-4 font-semibold">#{{ $order->id }}</td>
-                            <td class="px-5 py-4">{{ $order->sold_at->format('d M Y') }}</td>
+                            <td class="px-5 py-4 font-semibold">{{ $order->order_number }}</td>
+                            <td class="px-5 py-4">{{ $order->ordered_at->format('d M Y') }}</td>
                             <td class="px-5 py-4">
                                 <div>{{ $order->customer_name ?: '-' }}</div>
                                 <div class="text-xs text-zinc-500">{{ $order->customer_phone ?: '' }}</div>
                             </td>
                             <td class="px-5 py-4">
-                                <a href="{{ route('orders.show', $order) }}" class="font-semibold hover:underline">{{ $order->product->name }}</a>
-                                <div class="text-xs text-zinc-500">{{ $order->product->sku ?: $order->product->imei1 ?: $order->product->imei2 ?: '' }}</div>
+                                <a href="{{ route('orders.show', $order) }}" class="font-semibold hover:underline">{{ $order->items->first()?->product?->name ?: 'Order items' }}</a>
+                                <div class="text-xs text-zinc-500">{{ $order->items->count() }} item(s)</div>
                             </td>
                             <td class="px-5 py-4">{{ number_format($order->total_amount, 3) }} KD</td>
                             <td class="px-5 py-4 text-right">

@@ -23,18 +23,32 @@ class PurchaseWorkflowTest extends TestCase
         ]));
 
         $this->post(route('purchases.store'), [
-            'product_name' => 'iPhone 15 Pro',
-            'product_category' => 'Phones',
-            'product_brand' => 'Apple',
-            'product_imei1' => '353456789012345',
-            'product_imei2' => '353456789012346',
-            'product_condition' => 'Used',
-            'sale_price' => 250,
             'purchased_at' => now()->format('Y-m-d'),
-            'quantity' => 2,
-            'unit_price' => 150,
             'payment_method' => 'Cash',
-            'notes' => 'Clean device with box.',
+            'products' => [
+                [
+                    'name' => 'iPhone 15 Pro',
+                    'category' => 'Phones',
+                    'brand' => 'Apple',
+                    'imei1' => '353456789012345',
+                    'imei2' => '353456789012346',
+                    'condition' => 'Used',
+                    'sale_price' => 250,
+                    'quantity' => 2,
+                    'unit_price' => 150,
+                    'notes' => 'Clean device with box.',
+                ],
+                [
+                    'name' => 'iPad Air',
+                    'category' => 'Tablets',
+                    'brand' => 'Apple',
+                    'imei1' => '353456789012347',
+                    'condition' => 'Used',
+                    'sale_price' => 180,
+                    'quantity' => 1,
+                    'unit_price' => 100,
+                ],
+            ],
             'customer_name' => 'Ahmad Saleh',
             'customer_email' => 'ahmad@example.com',
             'customer_phone' => '+96550000000',
@@ -52,6 +66,12 @@ class PurchaseWorkflowTest extends TestCase
             'total_amount' => 300,
         ]);
 
+        $this->assertDatabaseHas('purchases', [
+            'quantity' => 1,
+            'unit_price' => 100,
+            'total_amount' => 100,
+        ]);
+
         $this->assertDatabaseHas('products', [
             'name' => 'iPhone 15 Pro',
             'brand' => 'Apple',
@@ -60,6 +80,12 @@ class PurchaseWorkflowTest extends TestCase
             'stock_quantity' => 2,
             'purchase_price' => 150,
             'sale_price' => 250,
+        ]);
+
+        $this->assertDatabaseHas('products', [
+            'name' => 'iPad Air',
+            'stock_quantity' => 1,
+            'purchase_price' => 100,
         ]);
     }
 

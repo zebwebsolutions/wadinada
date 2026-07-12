@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Receipt #{{ $order->id }} - Wadi Nada Phone</title>
+    <title>Receipt {{ $order->order_number }} - Wadi Nada Phone</title>
     <style>
         body { margin: 0; background: #f4f4f5; color: #18181b; font-family: Arial, sans-serif; }
         .page { max-width: 760px; margin: 32px auto; padding: 0 16px; }
@@ -42,11 +42,11 @@
                 <div class="meta">
                     <div class="box">
                         <span class="label">Receipt</span>
-                        <span class="value">#{{ $order->id }}</span>
+                        <span class="value">{{ $order->order_number }}</span>
                     </div>
                     <div class="box">
                         <span class="label">Date</span>
-                        <span class="value">{{ $order->sold_at->format('d M Y') }}</span>
+                        <span class="value">{{ $order->ordered_at->format('d M Y') }}</span>
                     </div>
                     <div class="box">
                         <span class="label">Customer</span>
@@ -68,22 +68,24 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>
-                                <strong>{{ $order->product->name }}</strong><br>
-                                <span>{{ $order->product->brand ?: '' }}</span>
-                                @if ($order->product->sku || $order->product->imei1 || $order->product->imei2)
-                                    <br><span>
-                                        {{ $order->product->sku ? 'SKU: '.$order->product->sku : '' }}
-                                        {{ $order->product->imei1 ? ' IMEI1: '.$order->product->imei1 : '' }}
-                                        {{ $order->product->imei2 ? ' IMEI2: '.$order->product->imei2 : '' }}
-                                    </span>
-                                @endif
-                            </td>
-                            <td>{{ $order->quantity }}</td>
-                            <td>{{ number_format($order->unit_price, 3) }} KD</td>
-                            <td>{{ number_format($order->total_amount, 3) }} KD</td>
-                        </tr>
+                        @foreach ($order->items as $item)
+                            <tr>
+                                <td>
+                                    <strong>{{ $item->product->name }}</strong><br>
+                                    <span>{{ $item->product->brand ?: '' }}</span>
+                                    @if ($item->product->sku || $item->product->imei1 || $item->product->imei2)
+                                        <br><span>
+                                            {{ $item->product->sku ? 'SKU: '.$item->product->sku : '' }}
+                                            {{ $item->product->imei1 ? ' IMEI1: '.$item->product->imei1 : '' }}
+                                            {{ $item->product->imei2 ? ' IMEI2: '.$item->product->imei2 : '' }}
+                                        </span>
+                                    @endif
+                                </td>
+                                <td>{{ $item->quantity }}</td>
+                                <td>{{ number_format($item->unit_price, 3) }} KD</td>
+                                <td>{{ number_format($item->total_amount, 3) }} KD</td>
+                            </tr>
+                        @endforeach
                     </tbody>
                 </table>
 

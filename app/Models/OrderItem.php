@@ -6,33 +6,21 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Sale extends Model
+class OrderItem extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'product_id',
         'order_id',
-        'order_number',
-        'sold_at',
+        'product_id',
         'quantity',
         'unit_price',
         'total_amount',
-        'payment_method',
-        'salesman_name',
-        'customer_name',
-        'customer_email',
-        'customer_phone',
-        'customer_id_number',
-        'kuwait_id_path',
-        'notes',
     ];
 
-    protected function casts(): array
+    public function order(): BelongsTo
     {
-        return [
-            'sold_at' => 'date',
-        ];
+        return $this->belongsTo(Order::class);
     }
 
     public function product(): BelongsTo

@@ -4,7 +4,7 @@
             There are no products in stock to sell yet. Record a customer purchase or add stock first.
         </div>
     @else
-        <form method="POST" action="{{ route('sales.store') }}">
+        <form method="POST" action="{{ route('sales.store') }}" enctype="multipart/form-data">
             @include('sales._form', ['buttonLabel' => 'Record Sale'])
         </form>
     @endif

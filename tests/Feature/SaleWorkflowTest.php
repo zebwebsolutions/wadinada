@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Product;
+use App\Models\Order;
 use App\Models\Sale;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -33,16 +34,20 @@ class SaleWorkflowTest extends TestCase
         ]);
 
         $this->post(route('sales.store'), [
-            'product_id' => $product->id,
-            'sold_at' => now()->format('Y-m-d'),
-            'quantity' => 1,
-            'unit_price' => 240,
+            'ordered_at' => now()->format('Y-m-d'),
+            'items' => [
+                [
+                    'product_id' => $product->id,
+                    'quantity' => 1,
+                    'unit_price' => 240,
+                ],
+            ],
             'payment_method' => 'KNET',
             'salesman_name' => 'Yousef',
             'customer_name' => 'Mariam',
-            'customer_email' => 'mariam@example.com',
             'customer_phone' => '+96551111111',
-        ])->assertRedirect(route('sales.index'));
+            'customer_id_number' => '299010101234',
+        ])->assertRedirect();
 
         $this->assertDatabaseHas('sales', [
             'product_id' => $product->id,
@@ -50,6 +55,13 @@ class SaleWorkflowTest extends TestCase
             'unit_price' => 240,
             'total_amount' => 240,
             'salesman_name' => 'Yousef',
+        ]);
+
+        $this->assertDatabaseHas('orders', [
+            'customer_name' => 'Mariam',
+            'customer_phone' => '+96551111111',
+            'customer_id_number' => '299010101234',
+            'total_amount' => 240,
         ]);
 
         $this->assertSame(2, $product->fresh()->stock_quantity);
@@ -114,7 +126,24 @@ class SaleWorkflowTest extends TestCase
             'sale_price' => 180,
         ]);
 
-        $sale = Sale::create([
+        $order = Order::create([
+            'order_number' => 'WN-TEST-001',
+            'ordered_at' => now(),
+            'customer_name' => 'Noura',
+            'customer_phone' => '+96552222222',
+            'total_amount' => 180,
+        ]);
+
+        $order->items()->create([
+            'product_id' => $product->id,
+            'quantity' => 1,
+            'unit_price' => 180,
+            'total_amount' => 180,
+        ]);
+
+        Sale::create([
+            'order_id' => $order->id,
+            'order_number' => $order->order_number,
             'product_id' => $product->id,
             'sold_at' => now(),
             'quantity' => 1,
@@ -129,7 +158,7 @@ class SaleWorkflowTest extends TestCase
             ->assertSee('Pixel Phone')
             ->assertSee('Noura');
 
-        $this->get(route('orders.print', $sale))
+        $this->get(route('orders.print', $order))
             ->assertOk()
             ->assertSee('Wadi Nada Phone')
             ->assertSee('Shop 15, Khalid Bin Waleed Street, Sharq');

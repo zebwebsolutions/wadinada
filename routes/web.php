@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\BrandController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\OrderController;
@@ -24,6 +25,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/upload-limits', UploadLimitsController::class)->name('upload-limits');
 
     Route::resource('products', ProductController::class);
+    Route::resource('brands', BrandController::class)->except(['show']);
     Route::resource('purchases', PurchaseController::class);
     Route::resource('sales', SaleController::class);
     Route::resource('customers', CustomerController::class)->only(['index', 'show']);

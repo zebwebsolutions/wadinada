@@ -16,6 +16,7 @@
             <nav class="space-y-1 px-3 py-5 text-sm font-medium">
                 <a href="{{ route('dashboard') }}" class="block rounded-md px-3 py-2 {{ request()->routeIs('dashboard') ? 'bg-zinc-950 text-white' : 'text-zinc-700 hover:bg-zinc-100' }}">Dashboard</a>
                 <a href="{{ route('products.index') }}" class="block rounded-md px-3 py-2 {{ request()->routeIs('products.*') ? 'bg-zinc-950 text-white' : 'text-zinc-700 hover:bg-zinc-100' }}">Products</a>
+                <a href="{{ route('brands.index') }}" class="block rounded-md px-3 py-2 {{ request()->routeIs('brands.*') ? 'bg-zinc-950 text-white' : 'text-zinc-700 hover:bg-zinc-100' }}">Brands</a>
                 <a href="{{ route('orders.index') }}" class="block rounded-md px-3 py-2 {{ request()->routeIs('orders.*') ? 'bg-zinc-950 text-white' : 'text-zinc-700 hover:bg-zinc-100' }}">Orders</a>
                 <a href="{{ route('customers.index') }}" class="block rounded-md px-3 py-2 {{ request()->routeIs('customers.*') ? 'bg-zinc-950 text-white' : 'text-zinc-700 hover:bg-zinc-100' }}">Customers</a>
                 <a href="{{ route('purchases.index') }}" class="block rounded-md px-3 py-2 {{ request()->routeIs('purchases.*') ? 'bg-zinc-950 text-white' : 'text-zinc-700 hover:bg-zinc-100' }}">Customer Purchases</a>
@@ -50,6 +51,7 @@
                 <div class="flex gap-2 overflow-x-auto border-t border-zinc-100 px-4 py-2 text-sm lg:hidden">
                     <a href="{{ route('dashboard') }}" class="whitespace-nowrap rounded-md px-3 py-2 {{ request()->routeIs('dashboard') ? 'bg-zinc-950 text-white' : 'text-zinc-700' }}">Dashboard</a>
                     <a href="{{ route('products.index') }}" class="whitespace-nowrap rounded-md px-3 py-2 {{ request()->routeIs('products.*') ? 'bg-zinc-950 text-white' : 'text-zinc-700' }}">Products</a>
+                    <a href="{{ route('brands.index') }}" class="whitespace-nowrap rounded-md px-3 py-2 {{ request()->routeIs('brands.*') ? 'bg-zinc-950 text-white' : 'text-zinc-700' }}">Brands</a>
                     <a href="{{ route('orders.index') }}" class="whitespace-nowrap rounded-md px-3 py-2 {{ request()->routeIs('orders.*') ? 'bg-zinc-950 text-white' : 'text-zinc-700' }}">Orders</a>
                     <a href="{{ route('customers.index') }}" class="whitespace-nowrap rounded-md px-3 py-2 {{ request()->routeIs('customers.*') ? 'bg-zinc-950 text-white' : 'text-zinc-700' }}">Customers</a>
                     <a href="{{ route('purchases.index') }}" class="whitespace-nowrap rounded-md px-3 py-2 {{ request()->routeIs('purchases.*') ? 'bg-zinc-950 text-white' : 'text-zinc-700' }}">Purchases</a>
