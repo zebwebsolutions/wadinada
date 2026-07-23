@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductUnit;
-use App\Models\Order;
 use App\Models\Sale;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -26,9 +26,8 @@ class SaleController extends Controller
     public function create(): View
     {
         return view('sales.create', [
-            'units' => ProductUnit::with('product')
+            'units' => ProductUnit::with(['product', 'identifiers'])
                 ->where('status', 'available')
-                ->whereHas('product', fn ($query) => $query->where('stock_quantity', '>', 0))
                 ->latest()
                 ->get(),
             'paymentMethods' => $this->paymentMethods(),
@@ -40,7 +39,7 @@ class SaleController extends Controller
         $data = $this->validatedCheckout($request);
 
         $order = DB::transaction(function () use ($data, $request) {
-            $units = ProductUnit::with('product')
+            $units = ProductUnit::with(['product', 'identifiers'])
                 ->lockForUpdate()
                 ->whereIn('id', collect($data['items'])->pluck('product_unit_id'))
                 ->get()
@@ -49,7 +48,7 @@ class SaleController extends Controller
             foreach ($data['items'] as $index => $item) {
                 $unit = $units->get($item['product_unit_id']);
 
-                if (! $unit || $unit->status !== 'available' || $unit->product->stock_quantity < 1) {
+                if (! $unit || $unit->status !== 'available') {
                     throw ValidationException::withMessages([
                         'items.'.$index.'.product_unit_id' => 'This unit is no longer available.',
                     ]);
@@ -72,6 +71,7 @@ class SaleController extends Controller
             ]);
 
             $total = 0;
+            $affectedProductIds = [];
 
             foreach ($data['items'] as $item) {
                 $unit = $units->get($item['product_unit_id']);
@@ -106,10 +106,18 @@ class SaleController extends Controller
                 ]);
 
                 $unit->update(['status' => 'sold']);
-                $product->decrement('stock_quantity');
+                $affectedProductIds[] = $product->id;
             }
 
             $order->update(['total_amount' => $total]);
+
+            foreach (array_unique($affectedProductIds) as $productId) {
+                Product::whereKey($productId)->update([
+                    'stock_quantity' => ProductUnit::where('product_id', $productId)
+                        ->where('status', 'available')
+                        ->count(),
+                ]);
+            }
 
             return $order;
         });
@@ -135,6 +143,12 @@ class SaleController extends Controller
 
     public function update(Request $request, Sale $sale): RedirectResponse
     {
+        if ($sale->order_id || $sale->product_unit_id) {
+            return back()->withErrors([
+                'sale' => 'Tracked checkout lines cannot be edited independently from their order.',
+            ]);
+        }
+
         $data = $this->validatedSale($request);
 
         DB::transaction(function () use ($data, $sale) {
@@ -158,10 +172,25 @@ class SaleController extends Controller
 
     public function destroy(Sale $sale): RedirectResponse
     {
+        if ($sale->order_id) {
+            return back()->withErrors([
+                'sale' => 'An order line cannot be deleted independently. Use an order return or void workflow.',
+            ]);
+        }
+
         DB::transaction(function () use ($sale) {
             $sale->product()->increment('stock_quantity', $sale->quantity);
             $sale->unit?->update(['status' => 'available']);
+            $productId = $sale->product_id;
             $sale->delete();
+
+            if ($sale->product_unit_id) {
+                Product::whereKey($productId)->update([
+                    'stock_quantity' => ProductUnit::where('product_id', $productId)
+                        ->where('status', 'available')
+                        ->count(),
+                ]);
+            }
         });
 
         return redirect()->route('sales.index')->with('status', 'Sale deleted and stock restored.');
@@ -188,7 +217,7 @@ class SaleController extends Controller
         return $request->validate([
             'ordered_at' => ['required', 'date'],
             'items' => ['required', 'array', 'min:1'],
-            'items.*.product_unit_id' => ['required', 'exists:product_units,id'],
+            'items.*.product_unit_id' => ['required', 'distinct', 'exists:product_units,id'],
             'items.*.unit_price' => ['required', 'numeric', 'min:0'],
             'payment_method' => ['nullable', 'string', 'max:80'],
             'salesman_name' => ['nullable', 'string', 'max:255'],

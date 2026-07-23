@@ -44,15 +44,23 @@
     </label>
 
     <label class="block">
-        <span class="text-sm font-semibold">Stock quantity</span>
-        <input type="number" min="0" name="stock_quantity" value="{{ old('stock_quantity', $product->stock_quantity ?? 0) }}" required class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-zinc-950 focus:outline-none">
-        @error('stock_quantity') <span class="mt-1 block text-sm text-red-700">{{ $message }}</span> @enderror
+        <span class="text-sm font-semibold">Storage / capacity</span>
+        <input name="storage_capacity" value="{{ old('storage_capacity', $product->storage_capacity) }}" placeholder="256 GB" class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-zinc-950 focus:outline-none">
     </label>
 
     <label class="block">
-        <span class="text-sm font-semibold">Purchase price KD</span>
-        <input type="number" step="0.001" min="0" name="purchase_price" value="{{ old('purchase_price', $product->purchase_price ?? 0) }}" required class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-zinc-950 focus:outline-none">
-        @error('purchase_price') <span class="mt-1 block text-sm text-red-700">{{ $message }}</span> @enderror
+        <span class="text-sm font-semibold">Color</span>
+        <input name="color" value="{{ old('color', $product->color) }}" placeholder="Black" class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-zinc-950 focus:outline-none">
+    </label>
+
+    <label class="block">
+        <span class="text-sm font-semibold">Unit tracking</span>
+        <select name="tracking_method" required class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-zinc-950 focus:outline-none">
+            @foreach ($trackingMethods as $value => $label)
+                <option value="{{ $value }}" @selected(old('tracking_method', $product->tracking_method ?? 'imei') === $value)>{{ $label }}</option>
+            @endforeach
+        </select>
+        <span class="mt-1 block text-xs text-zinc-500">This decides what staff scan when receiving and selling a unit.</span>
     </label>
 
     <label class="block">
@@ -65,6 +73,12 @@
         <span class="text-sm font-semibold">Notes</span>
         <textarea name="notes" rows="4" class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-zinc-950 focus:outline-none">{{ old('notes', $product->notes) }}</textarea>
     </label>
+</div>
+
+<div class="mt-5 rounded-lg border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
+    This form defines a reusable product variant. Stock and purchase cost are added through
+    <a href="{{ route('purchases.create') }}" class="font-semibold underline">Batch inventory intake</a>
+    so every physical unit keeps its own identifier and exact cost.
 </div>
 
 <div class="mt-6 flex items-center gap-3">

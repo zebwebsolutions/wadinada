@@ -23,4 +23,8 @@ class Customer extends Model
         return $this->hasMany(Purchase::class);
     }
 
+    public function purchaseBatches(): HasMany
+    {
+        return $this->hasMany(PurchaseBatch::class);
+    }
 }

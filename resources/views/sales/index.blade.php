@@ -22,7 +22,7 @@
                         <tr>
                             <td class="px-5 py-4">{{ $sale->sold_at->format('d M Y') }}</td>
                             <td class="px-5 py-4">
-                                <a href="{{ route('sales.show', $sale) }}" class="font-semibold hover:underline">{{ $sale->product->name }}</a>
+                                <a href="{{ route('sales.show', $sale) }}" class="font-semibold hover:underline">{{ $sale->product->variant_name }}</a>
                                 <div class="text-xs text-zinc-500">{{ $sale->product->brand ?: 'No brand' }}</div>
                             </td>
                             <td class="px-5 py-4">{{ $sale->customer_name ?: '-' }}</td>
@@ -34,13 +34,14 @@
                                     @if ($sale->order_id)
                                         <a href="{{ route('orders.show', $sale->order_id) }}" class="font-semibold text-zinc-700 hover:text-zinc-950">Order</a>
                                         <a href="{{ route('orders.print', $sale->order_id) }}" target="_blank" class="font-semibold text-zinc-700 hover:text-zinc-950">Print</a>
+                                    @else
+                                        <a href="{{ route('sales.edit', $sale) }}" class="font-semibold text-zinc-700 hover:text-zinc-950">Edit</a>
+                                        <form method="POST" action="{{ route('sales.destroy', $sale) }}" onsubmit="return confirm('Delete this legacy sale? Product stock will be restored.');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button class="font-semibold text-red-700 hover:text-red-900">Delete</button>
+                                        </form>
                                     @endif
-                                    <a href="{{ route('sales.edit', $sale) }}" class="font-semibold text-zinc-700 hover:text-zinc-950">Edit</a>
-                                    <form method="POST" action="{{ route('sales.destroy', $sale) }}" onsubmit="return confirm('Delete this sale? Product stock will be restored by this sale quantity.');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button class="font-semibold text-red-700 hover:text-red-900">Delete</button>
-                                    </form>
                                 </div>
                             </td>
                         </tr>

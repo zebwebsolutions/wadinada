@@ -71,15 +71,14 @@
                         @foreach ($order->items as $item)
                             <tr>
                                 <td>
-                                    <strong>{{ $item->product->name }}</strong><br>
+                                    <strong>{{ $item->product->variant_name }}</strong><br>
                                     <span>{{ $item->product->brand ?: '' }}</span>
-                                    @if ($item->product->sku || $item->product->imei1 || $item->product->imei2)
+                                    @php($receiptIdentifier = $item->unit?->identifiers->firstWhere('is_primary', true)?->value ?? $item->unit?->imei)
+                                    @if ($item->product->sku || $receiptIdentifier)
                                         <br><span>
                                             {{ $item->product->sku ? 'SKU: '.$item->product->sku : '' }}
-                                            {{ $item->unit?->imei ? ' IMEI: '.$item->unit->imei : '' }}
+                                            {{ $receiptIdentifier ? ' ID: '.$receiptIdentifier : '' }}
                                         </span>
-                                    @elseif ($item->unit?->imei)
-                                        <br><span>IMEI: {{ $item->unit->imei }}</span>
                                     @endif
                                 </td>
                                 <td>{{ $item->quantity }}</td>

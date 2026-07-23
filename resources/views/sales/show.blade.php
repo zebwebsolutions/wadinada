@@ -4,18 +4,19 @@
             <div class="flex items-start justify-between gap-3">
                 <div>
                     <p class="text-sm font-medium text-zinc-500">{{ $sale->sold_at->format('d M Y') }}</p>
-                    <h2 class="mt-1 text-xl font-semibold">{{ $sale->product->name }}</h2>
+                    <h2 class="mt-1 text-xl font-semibold">{{ $sale->product->variant_name }}</h2>
                 </div>
                 <div class="flex gap-2">
                     @if ($sale->order_id)
                         <a href="{{ route('orders.print', $sale->order_id) }}" target="_blank" class="rounded-md bg-zinc-950 px-3 py-2 text-sm font-semibold text-white hover:bg-zinc-800">Print Receipt</a>
+                    @else
+                        <a href="{{ route('sales.edit', $sale) }}" class="rounded-md border border-zinc-300 px-3 py-2 text-sm font-semibold hover:bg-zinc-50">Edit</a>
+                        <form method="POST" action="{{ route('sales.destroy', $sale) }}" onsubmit="return confirm('Delete this legacy sale? Product stock will be restored.');">
+                            @csrf
+                            @method('DELETE')
+                            <button class="rounded-md border border-red-300 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50">Delete</button>
+                        </form>
                     @endif
-                    <a href="{{ route('sales.edit', $sale) }}" class="rounded-md border border-zinc-300 px-3 py-2 text-sm font-semibold hover:bg-zinc-50">Edit</a>
-                    <form method="POST" action="{{ route('sales.destroy', $sale) }}" onsubmit="return confirm('Delete this sale? Product stock will be restored by this sale quantity.');">
-                        @csrf
-                        @method('DELETE')
-                        <button class="rounded-md border border-red-300 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50">Delete</button>
-                    </form>
                 </div>
             </div>
             <dl class="mt-5 space-y-3 text-sm">

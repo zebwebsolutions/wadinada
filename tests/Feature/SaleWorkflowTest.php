@@ -2,9 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductUnit;
-use App\Models\Order;
 use App\Models\Sale;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -36,6 +36,16 @@ class SaleWorkflowTest extends TestCase
         $unit = ProductUnit::create([
             'product_id' => $product->id,
             'imei' => '861234567890123',
+            'cost_price' => 180,
+            'status' => 'available',
+        ]);
+        ProductUnit::create([
+            'product_id' => $product->id,
+            'cost_price' => 180,
+            'status' => 'available',
+        ]);
+        ProductUnit::create([
+            'product_id' => $product->id,
             'cost_price' => 180,
             'status' => 'available',
         ]);
@@ -177,5 +187,43 @@ class SaleWorkflowTest extends TestCase
             ->assertOk()
             ->assertSee('Wadi Nada Phone')
             ->assertSee('Shop 15, Khalid Bin Waleed Street, Sharq');
+    }
+
+    public function test_same_inventory_unit_cannot_be_submitted_twice_in_one_checkout(): void
+    {
+        $this->actingAs(User::create([
+            'name' => 'Sales Staff',
+            'email' => 'duplicate-unit-sale@example.com',
+            'password' => 'password',
+            'role' => 'sales',
+        ]));
+
+        $product = Product::create([
+            'name' => 'iPhone 17',
+            'category' => 'Phones',
+            'condition' => 'New',
+            'tracking_method' => 'imei',
+            'stock_quantity' => 1,
+            'purchase_price' => 200,
+            'sale_price' => 280,
+        ]);
+        $unit = ProductUnit::create([
+            'product_id' => $product->id,
+            'imei' => '444444444444444',
+            'cost_price' => 200,
+            'status' => 'available',
+        ]);
+
+        $this->post(route('sales.store'), [
+            'ordered_at' => now()->format('Y-m-d'),
+            'items' => [
+                ['product_unit_id' => $unit->id, 'unit_price' => 280],
+                ['product_unit_id' => $unit->id, 'unit_price' => 280],
+            ],
+        ])->assertSessionHasErrors('items.1.product_unit_id');
+
+        $this->assertDatabaseCount('orders', 0);
+        $this->assertDatabaseCount('sales', 0);
+        $this->assertSame('available', $unit->fresh()->status);
     }
 }

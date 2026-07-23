@@ -10,7 +10,7 @@ class OrderController extends Controller
     public function index(): View
     {
         $orders = Order::query()
-            ->with(['items.product', 'items.unit'])
+            ->with(['items.product', 'items.unit.identifiers'])
             ->when(request('search'), function ($query, string $search) {
                 $query->where(function ($query) use ($search) {
                     $query->where('order_number', 'like', "%{$search}%")
@@ -19,7 +19,11 @@ class OrderController extends Controller
                         ->orWhere('customer_id_number', 'like', "%{$search}%")
                         ->orWhere('salesman_name', 'like', "%{$search}%")
                         ->orWhereHas('items.unit', function ($query) use ($search) {
-                            $query->where('imei', 'like', "%{$search}%");
+                            $query->where('imei', 'like', "%{$search}%")
+                                ->orWhereHas('identifiers', function ($query) use ($search) {
+                                    $query->where('value', 'like', "%{$search}%")
+                                        ->orWhere('normalized_value', 'like', "%{$search}%");
+                                });
                         })
                         ->orWhereHas('items.product', function ($query) use ($search) {
                             $query->where('name', 'like', "%{$search}%")
@@ -39,14 +43,14 @@ class OrderController extends Controller
 
     public function show(Order $order): View
     {
-        $order->load(['items.product', 'items.unit']);
+        $order->load(['items.product', 'items.unit.identifiers']);
 
         return view('orders.show', compact('order'));
     }
 
     public function print(Order $order): View
     {
-        $order->load(['items.product', 'items.unit']);
+        $order->load(['items.product', 'items.unit.identifiers']);
 
         return view('orders.print', compact('order'));
     }

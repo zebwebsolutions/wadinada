@@ -15,15 +15,27 @@ class Product extends Model
         'category',
         'brand',
         'model',
+        'color',
+        'storage_capacity',
         'sku',
         'imei1',
         'imei2',
         'condition',
+        'tracking_method',
         'stock_quantity',
         'purchase_price',
         'sale_price',
         'notes',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'purchase_price' => 'decimal:3',
+            'sale_price' => 'decimal:3',
+            'stock_quantity' => 'integer',
+        ];
+    }
 
     public function purchases(): HasMany
     {
@@ -48,5 +60,12 @@ class Product extends Model
     public function availableUnits(): HasMany
     {
         return $this->hasMany(ProductUnit::class)->where('status', 'available');
+    }
+
+    public function getVariantNameAttribute(): string
+    {
+        $details = array_filter([$this->storage_capacity, $this->color]);
+
+        return $this->name.($details ? ' · '.implode(' · ', $details) : '');
     }
 }

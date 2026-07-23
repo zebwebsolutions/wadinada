@@ -16,9 +16,22 @@
                 <select data-product-picker class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-zinc-950 focus:outline-none">
                     <option value="">Select unit</option>
                     @foreach ($units as $unit)
-                        @php($product = $unit->product)
-                        <option value="{{ $unit->id }}" data-name="{{ $product->name }}" data-brand="{{ $product->brand }}" data-sku="{{ $product->sku }}" data-imei="{{ $unit->imei }}" data-sale-price="{{ $product->sale_price ?: 0 }}">
-                            {{ $product->name }} {{ $product->brand ? '- '.$product->brand : '' }} {{ $unit->imei ? '- IMEI '.$unit->imei : '- Unit #'.$unit->id }}
+                        @php
+                            $product = $unit->product;
+                            $primary = $unit->identifiers->firstWhere('is_primary', true);
+                            $identifier = $primary?->value ?? $unit->imei ?? 'Unit #'.$unit->id;
+                        @endphp
+                        <option
+                            value="{{ $unit->id }}"
+                            data-name="{{ $product->variant_name }}"
+                            data-brand="{{ $product->brand }}"
+                            data-sku="{{ $product->sku }}"
+                            data-identifier="{{ $identifier }}"
+                            data-identifiers="{{ $unit->identifiers->pluck('value')->join('|') }}"
+                            data-sale-price="{{ $product->sale_price ?: 0 }}"
+                            @selected((string) request('unit') === (string) $unit->id)
+                        >
+                            {{ $product->brand ? $product->brand.' · ' : '' }}{{ $product->variant_name }} · {{ $identifier }}
                         </option>
                     @endforeach
                 </select>
@@ -128,7 +141,11 @@
         const matchingOption = (code) => {
             const normalized = normalize(code);
             return Array.from(picker.options).find((option) => {
-                return [option.dataset.sku, option.dataset.imei].some((value) => value && normalize(value) === normalized);
+                return [
+                    option.dataset.sku,
+                    option.dataset.identifier,
+                    ...(option.dataset.identifiers || '').split('|'),
+                ].some((value) => value && normalize(value) === normalized);
             });
         };
 
@@ -161,17 +178,56 @@
             const tr = document.createElement('tr');
             tr.dataset.cartRow = 'true';
             tr.dataset.unitId = option.value;
-            tr.innerHTML = `
-                <td class="px-4 py-3">
-                    <input type="hidden" name="items[${rowIndex}][product_unit_id]" value="${option.value}">
-                    <div class="font-semibold">${option.dataset.name}</div>
-                    <div class="text-xs text-zinc-500">${option.dataset.brand || ''} ${option.dataset.sku ? 'SKU ' + option.dataset.sku : ''} ${option.dataset.imei ? 'IMEI ' + option.dataset.imei : 'Unit #' + option.value}</div>
-                </td>
-                <td class="px-4 py-3">1</td>
-                <td class="px-4 py-3"><input data-cart-price type="number" min="0" step="0.001" name="items[${rowIndex}][unit_price]" value="${price}" class="w-28 rounded-md border border-zinc-300 px-2 py-1"></td>
-                <td class="px-4 py-3" data-row-total>${money(price)}</td>
-                <td class="px-4 py-3 text-right"><button type="button" data-remove-row class="font-semibold text-red-700">Remove</button></td>
-            `;
+
+            const unitCell = document.createElement('td');
+            unitCell.className = 'px-4 py-3';
+            const unitId = document.createElement('input');
+            unitId.type = 'hidden';
+            unitId.name = `items[${rowIndex}][product_unit_id]`;
+            unitId.value = option.value;
+            const name = document.createElement('div');
+            name.className = 'font-semibold';
+            name.textContent = option.dataset.name;
+            const details = document.createElement('div');
+            details.className = 'text-xs text-zinc-500';
+            details.textContent = [
+                option.dataset.brand,
+                option.dataset.sku ? 'SKU ' + option.dataset.sku : '',
+                option.dataset.identifier,
+            ].filter(Boolean).join(' · ');
+            unitCell.append(unitId, name, details);
+
+            const quantityCell = document.createElement('td');
+            quantityCell.className = 'px-4 py-3';
+            quantityCell.textContent = '1';
+
+            const priceCell = document.createElement('td');
+            priceCell.className = 'px-4 py-3';
+            const priceInput = document.createElement('input');
+            priceInput.type = 'number';
+            priceInput.min = '0';
+            priceInput.step = '0.001';
+            priceInput.name = `items[${rowIndex}][unit_price]`;
+            priceInput.value = price;
+            priceInput.className = 'w-28 rounded-md border border-zinc-300 px-2 py-1';
+            priceInput.setAttribute('data-cart-price', '');
+            priceCell.appendChild(priceInput);
+
+            const total = document.createElement('td');
+            total.className = 'px-4 py-3';
+            total.setAttribute('data-row-total', '');
+            total.textContent = money(price);
+
+            const actionCell = document.createElement('td');
+            actionCell.className = 'px-4 py-3 text-right';
+            const remove = document.createElement('button');
+            remove.type = 'button';
+            remove.className = 'font-semibold text-red-700';
+            remove.setAttribute('data-remove-row', '');
+            remove.textContent = 'Remove';
+            actionCell.appendChild(remove);
+
+            tr.append(unitCell, quantityCell, priceCell, total, actionCell);
             rows.appendChild(tr);
             rowIndex += 1;
             scanInput.value = '';
@@ -211,5 +267,9 @@
                 refreshTotal();
             }
         });
+
+        if (picker.value) {
+            addSelected();
+        }
     });
 </script>

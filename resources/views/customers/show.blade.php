@@ -39,7 +39,7 @@
                             <tr>
                                 <td class="px-5 py-3">{{ $purchase->purchased_at->format('d M Y') }}</td>
                                 <td class="px-5 py-3">
-                                    <a href="{{ route('purchases.show', $purchase) }}" class="font-semibold hover:underline">{{ $purchase->product->name }}</a>
+                                    <a href="{{ route('purchases.show', $purchase) }}" class="font-semibold hover:underline">{{ $purchase->product->variant_name }}</a>
                                 </td>
                                 <td class="px-5 py-3">{{ $purchase->quantity }}</td>
                                 <td class="px-5 py-3">{{ number_format($purchase->total_amount, 3) }} KD</td>

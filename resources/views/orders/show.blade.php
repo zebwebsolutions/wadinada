@@ -22,8 +22,8 @@
                         @foreach ($order->items as $item)
                             <tr>
                                 <td class="px-3 py-2">
-                                    <div class="font-semibold">{{ $item->product->name }}</div>
-                                    <div class="text-xs text-zinc-500">{{ $item->unit?->imei ? 'IMEI '.$item->unit->imei : '' }}</div>
+                                    <div class="font-semibold">{{ $item->product->variant_name }}</div>
+                                    <div class="font-mono text-xs text-zinc-500">{{ $item->unit?->identifiers->firstWhere('is_primary', true)?->value ?? $item->unit?->imei ?? '' }}</div>
                                 </td>
                                 <td class="px-3 py-2">{{ $item->quantity }}</td>
                                 <td class="px-3 py-2">{{ number_format($item->unit_price, 3) }} KD</td>

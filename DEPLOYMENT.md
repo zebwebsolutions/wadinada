@@ -48,6 +48,7 @@ public/.user.ini
 upload_max_filesize=10M
 post_max_size=25M
 max_file_uploads=20
+max_input_vars=5000
 max_execution_time=120
 max_input_time=120
 ```
@@ -144,6 +145,6 @@ Then test:
 1. `/` redirects to `/login` when logged out.
 2. Admin can log in.
 3. Dashboard opens after login.
-4. Add a customer purchase with Kuwait ID front/back images.
-5. Edit the purchase and confirm thumbnails appear.
-6. Add a product barcode and sell by scanning the barcode.
+4. Create a batch purchase with multiple product variants.
+5. Scan or paste IMEIs/serial numbers and confirm the received units appear in Inventory Lookup.
+6. Scan one received unit at checkout and confirm its status changes from available to sold.

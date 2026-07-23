@@ -1,20 +1,21 @@
 <x-layouts.app heading="Dashboard" eyebrow="Sales and purchase management">
     <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <div class="rounded-md border border-zinc-200 bg-white p-5">
-            <p class="text-sm font-medium text-zinc-500">Products</p>
-            <p class="mt-2 text-3xl font-semibold">{{ $totalProducts }}</p>
+            <p class="text-sm font-medium text-zinc-500">Available units</p>
+            <p class="mt-2 text-3xl font-semibold">{{ $availableUnits }}</p>
+            <a href="{{ route('inventory.index') }}" class="mt-2 inline-block text-xs font-semibold text-zinc-600 hover:text-zinc-950">{{ $totalProducts }} variants →</a>
+        </div>
+        <div class="rounded-md border border-zinc-200 bg-white p-5">
+            <p class="text-sm font-medium text-zinc-500">Inventory cost</p>
+            <p class="mt-2 text-3xl font-semibold">{{ number_format($inventoryValue, 3) }} <span class="text-base text-zinc-500">KD</span></p>
         </div>
         <div class="rounded-md border border-zinc-200 bg-white p-5">
             <p class="text-sm font-medium text-zinc-500">Customers</p>
             <p class="mt-2 text-3xl font-semibold">{{ $totalCustomers }}</p>
         </div>
         <div class="rounded-md border border-zinc-200 bg-white p-5">
-            <p class="text-sm font-medium text-zinc-500">Purchases</p>
-            <p class="mt-2 text-3xl font-semibold">{{ $totalPurchases }}</p>
-        </div>
-        <div class="rounded-md border border-zinc-200 bg-white p-5">
-            <p class="text-sm font-medium text-zinc-500">Sales</p>
-            <p class="mt-2 text-3xl font-semibold">{{ $totalSales }}</p>
+            <p class="text-sm font-medium text-zinc-500">Orders</p>
+            <p class="mt-2 text-3xl font-semibold">{{ $totalOrders }}</p>
         </div>
     </div>
 
@@ -36,9 +37,9 @@
                     <tbody class="divide-y divide-zinc-100">
                         @forelse ($products as $product)
                             <tr>
-                                <td class="px-5 py-3 font-medium"><a href="{{ route('products.show', $product) }}">{{ $product->name }}</a></td>
+                                <td class="px-5 py-3 font-medium"><a href="{{ route('products.show', $product) }}">{{ $product->variant_name }}</a></td>
                                 <td class="px-5 py-3 text-zinc-600">{{ $product->category }}</td>
-                                <td class="px-5 py-3">{{ $product->stock_quantity }}</td>
+                                <td class="px-5 py-3">{{ $product->available_units_count }}</td>
                             </tr>
                         @empty
                             <tr><td colspan="3" class="px-5 py-8 text-center text-zinc-500">No products yet.</td></tr>
@@ -67,7 +68,7 @@
                         @forelse ($purchases as $purchase)
                             <tr>
                                 <td class="px-5 py-3 font-medium">{{ $purchase->customer->name }}</td>
-                                <td class="px-5 py-3 text-zinc-600">{{ $purchase->product->name }}</td>
+                                <td class="px-5 py-3 text-zinc-600">{{ $purchase->product->variant_name }}</td>
                                 <td class="px-5 py-3">{{ $purchase->purchased_at->format('d M Y') }}</td>
                                 <td class="px-5 py-3">{{ number_format($purchase->total_amount, 3) }} KD</td>
                             </tr>
@@ -97,7 +98,7 @@
                     <tbody class="divide-y divide-zinc-100">
                         @forelse ($sales as $sale)
                             <tr>
-                                <td class="px-5 py-3 font-medium">{{ $sale->product->name }}</td>
+                                <td class="px-5 py-3 font-medium">{{ $sale->product->variant_name }}</td>
                                 <td class="px-5 py-3">{{ $sale->quantity }}</td>
                                 <td class="px-5 py-3">{{ $sale->sold_at->format('d M Y') }}</td>
                                 <td class="px-5 py-3">{{ number_format($sale->total_amount, 3) }} KD</td>

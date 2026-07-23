@@ -7,34 +7,26 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Purchase extends Model
+class PurchaseBatch extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'product_id',
-        'purchase_batch_id',
+        'batch_number',
         'customer_id',
         'purchased_at',
-        'quantity',
-        'unit_price',
-        'total_amount',
         'payment_method',
+        'total_amount',
         'notes',
+        'created_by',
     ];
 
     protected function casts(): array
     {
         return [
             'purchased_at' => 'date',
-            'unit_price' => 'decimal:3',
             'total_amount' => 'decimal:3',
         ];
-    }
-
-    public function product(): BelongsTo
-    {
-        return $this->belongsTo(Product::class);
     }
 
     public function customer(): BelongsTo
@@ -42,13 +34,13 @@ class Purchase extends Model
         return $this->belongsTo(Customer::class);
     }
 
-    public function batch(): BelongsTo
+    public function creator(): BelongsTo
     {
-        return $this->belongsTo(PurchaseBatch::class, 'purchase_batch_id');
+        return $this->belongsTo(User::class, 'created_by');
     }
 
-    public function units(): HasMany
+    public function items(): HasMany
     {
-        return $this->hasMany(ProductUnit::class);
+        return $this->hasMany(Purchase::class);
     }
 }

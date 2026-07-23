@@ -4,15 +4,19 @@
             <div class="flex items-start justify-between gap-3">
                 <div>
                     <p class="text-sm font-medium text-zinc-500">{{ $purchase->purchased_at->format('d M Y') }}</p>
-                    <h2 class="mt-1 text-xl font-semibold">{{ $purchase->product->name }}</h2>
+                    <h2 class="mt-1 text-xl font-semibold">{{ $purchase->product->variant_name }}</h2>
                 </div>
                 <div class="flex gap-2">
-                    <a href="{{ route('purchases.edit', $purchase) }}" class="rounded-md border border-zinc-300 px-3 py-2 text-sm font-semibold hover:bg-zinc-50">Edit</a>
-                    <form method="POST" action="{{ route('purchases.destroy', $purchase) }}" onsubmit="return confirm('Delete this customer purchase? Product stock will be reduced by this purchase quantity.');">
-                        @csrf
-                        @method('DELETE')
-                        <button class="rounded-md border border-red-300 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50">Delete</button>
-                    </form>
+                    @if ($purchase->batch)
+                        <a href="{{ route('purchase-batches.show', $purchase->batch) }}" class="rounded-md border border-zinc-300 px-3 py-2 text-sm font-semibold hover:bg-zinc-50">View Batch</a>
+                    @else
+                        <a href="{{ route('purchases.edit', $purchase) }}" class="rounded-md border border-zinc-300 px-3 py-2 text-sm font-semibold hover:bg-zinc-50">Edit</a>
+                        <form method="POST" action="{{ route('purchases.destroy', $purchase) }}" onsubmit="return confirm('Delete this customer purchase? Product stock will be reduced by this purchase quantity.');">
+                            @csrf
+                            @method('DELETE')
+                            <button class="rounded-md border border-red-300 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50">Delete</button>
+                        </form>
+                    @endif
                 </div>
             </div>
             <dl class="mt-5 space-y-3 text-sm">

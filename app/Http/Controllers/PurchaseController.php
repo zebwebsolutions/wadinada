@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StorePurchaseBatchRequest;
 use App\Models\Brand;
 use App\Models\Customer;
 use App\Models\Product;
-use App\Models\ProductUnit;
 use App\Models\Purchase;
+use App\Models\PurchaseBatch;
+use App\Services\InventoryIntakeService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -16,11 +18,14 @@ class PurchaseController extends Controller
 {
     public function index(): View
     {
-        $purchases = Purchase::with(['customer', 'product'])
+        $batches = PurchaseBatch::query()
+            ->with(['customer', 'items.product'])
+            ->withCount('items')
+            ->withSum('items as units_count', 'quantity')
             ->latest('purchased_at')
             ->paginate(12);
 
-        return view('purchases.index', compact('purchases'));
+        return view('purchases.index', compact('batches'));
     }
 
     public function create(): View
@@ -31,43 +36,51 @@ class PurchaseController extends Controller
                 'quantity' => 1,
             ]),
             'product' => new Product(['condition' => 'Used']),
+            'products' => Product::query()
+                ->withCount('availableUnits')
+                ->orderBy('brand')
+                ->orderBy('name')
+                ->orderBy('storage_capacity')
+                ->orderBy('color')
+                ->get(),
             'brands' => Brand::orderBy('name')->get(),
             'categories' => $this->categories(),
             'conditions' => $this->conditions(),
             'paymentMethods' => $this->paymentMethods(),
+            'trackingMethods' => $this->trackingMethods(),
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(
+        StorePurchaseBatchRequest $request,
+        InventoryIntakeService $inventoryIntake
+    ): RedirectResponse {
+        $batch = $inventoryIntake->record(
+            $request->validated(),
+            $request->user(),
+            $request->file('customer_kuwait_id')
+        );
+
+        return redirect()
+            ->route('purchase-batches.show', $batch)
+            ->with('status', $batch->items->sum('quantity').' inventory unit(s) added successfully.');
+    }
+
+    public function showBatch(PurchaseBatch $purchaseBatch): View
     {
-        $data = $this->validatedPurchase($request);
+        $purchaseBatch->load([
+            'customer',
+            'creator',
+            'items.product',
+            'items.units.identifiers',
+        ]);
 
-        DB::transaction(function () use ($data, $request) {
-            $customer = $this->storeCustomer($data, $request);
-
-            foreach ($data['products'] as $item) {
-                $product = Product::create($this->productPayload($item));
-                $purchase = Purchase::create($this->purchasePayload($data, $item, $customer, $product));
-
-                foreach ($item['units'] as $unit) {
-                    ProductUnit::create([
-                        'product_id' => $product->id,
-                        'imei' => $unit['imei'] ?? null,
-                        'cost_price' => $unit['cost_price'],
-                        'status' => 'available',
-                    ]);
-                }
-
-                $product->increment('stock_quantity', count($item['units']));
-            }
-        });
-
-        return redirect()->route('purchases.index')->with('status', 'Customer purchase recorded successfully.');
+        return view('purchases.batch-show', compact('purchaseBatch'));
     }
 
     public function show(Purchase $purchase): View
     {
-        $purchase->load(['customer', 'product']);
+        $purchase->load(['customer', 'product', 'units.identifiers', 'batch']);
 
         return view('purchases.show', compact('purchase'));
     }
@@ -88,6 +101,12 @@ class PurchaseController extends Controller
 
     public function update(Request $request, Purchase $purchase): RedirectResponse
     {
+        if ($purchase->units()->exists()) {
+            return back()->withErrors([
+                'purchase' => 'This batch line has individually tracked units and cannot be edited. Record a correction instead.',
+            ]);
+        }
+
         $data = $this->validatedPurchase($request, $purchase->product);
 
         DB::transaction(function () use ($data, $purchase, $request) {
@@ -107,6 +126,12 @@ class PurchaseController extends Controller
 
     public function destroy(Purchase $purchase): RedirectResponse
     {
+        if ($purchase->units()->exists()) {
+            return back()->withErrors([
+                'purchase' => 'This purchase contains tracked inventory units and cannot be deleted.',
+            ]);
+        }
+
         DB::transaction(function () use ($purchase) {
             $purchase->product()->decrement('stock_quantity', $purchase->quantity);
             $purchase->delete();
@@ -230,5 +255,15 @@ class PurchaseController extends Controller
     private function paymentMethods(): array
     {
         return ['Cash', 'KNET', 'Bank Transfer', 'Link Payment', 'Other'];
+    }
+
+    private function trackingMethods(): array
+    {
+        return [
+            'imei' => 'IMEI — cellular phones and tablets',
+            'serial' => 'Serial number — laptops, Wi-Fi tablets and watches',
+            'barcode' => 'Manufacturer barcode',
+            'internal' => 'Generate Wadi Nada inventory codes',
+        ];
     }
 }

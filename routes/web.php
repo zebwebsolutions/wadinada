@@ -1,10 +1,11 @@
 <?php
 
-use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\BrandController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\PurchaseController;
@@ -21,12 +22,15 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
     Route::get('/', DashboardController::class)->name('dashboard');
+    Route::get('/inventory', InventoryController::class)->name('inventory.index');
 
     Route::get('/upload-limits', UploadLimitsController::class)->name('upload-limits');
 
     Route::resource('products', ProductController::class);
     Route::resource('brands', BrandController::class)->except(['show']);
     Route::resource('purchases', PurchaseController::class);
+    Route::get('purchase-batches/{purchaseBatch}', [PurchaseController::class, 'showBatch'])
+        ->name('purchase-batches.show');
     Route::resource('sales', SaleController::class);
     Route::resource('customers', CustomerController::class)->only(['index', 'show']);
     Route::get('orders', [OrderController::class, 'index'])->name('orders.index');
